@@ -1,0 +1,164 @@
+---
+title: "Karatê club"
+author: "Leonardo Calil"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    tc_float: true
+---
+
+```{r setup, include=FALSE}
+
+# Pacotes
+library(igraph)
+library(igraphdata)
+library(gt)
+library(kableExtra)
+library(htmltools)
+
+##### Funcoes das medidas de centralidade ####
+
+source("Script/Funcao das medidas de centralidades.R")
+
+##### Funcoes dos testes estatisticos ####
+
+source("Script/Funcao dos testes estatisticos.R")
+
+##### Chunk options ####
+
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+
+data(karate)
+
+
+```
+
+# Grafo original
+
+```{r}
+plot(karate, main = "Clube de karatê")
+```
+
+
+# Correlações
+
+```{r}
+
+a <- c(0.8, 0.85, 0.9, 0.95, 0.99)
+b <- (1 - a)/a
+
+# B eig
+corr_eigenvector_ls_8 <- Teste_corr_s_eigenvector(karate, C_B_alpha, 0.8)[[1]]
+corr_eigenvector_ls_85  <- Teste_corr_s_eigenvector(karate, C_B_alpha, 0.85)[[1]]
+corr_eigenvector_ls_9  <- Teste_corr_s_eigenvector(karate, C_B_alpha, 0.9)[[1]]
+corr_eigenvector_ls_95  <- Teste_corr_s_eigenvector(karate, C_B_alpha, 0.95)[[1]]
+corr_eigenvector_ls_99  <- Teste_corr_s_eigenvector(karate, C_B_alpha, 0.99)[[1]]
+
+corr_eigenvector_ls_8b <- Teste_corr_eig_aa_s(karate, 0.25)[[1]]
+corr_eigenvector_ls_85b  <- Teste_corr_eig_aa_s(karate, 0.1765)[[1]]
+corr_eigenvector_ls_9b  <- Teste_corr_eig_aa_s(karate, 0.1111)[[1]]
+corr_eigenvector_ls_95b  <- Teste_corr_eig_aa_s(karate, 0.0526)[[1]]
+corr_eigenvector_ls_99b  <- Teste_corr_eig_aa_s(karate, 0.0101)[[1]]
+
+# B A
+corr_a_alpha_ls_8  <- Teste_corr_a_s_alpha(karate, C_B_alpha, 0.8)[[1]]
+corr_a_alpha_ls_85  <- Teste_corr_a_s_alpha(karate, C_B_alpha, 0.85)[[1]]
+corr_a_alpha_ls_9  <- Teste_corr_a_s_alpha(karate, C_B_alpha, 0.9)[[1]]
+corr_a_alpha_ls_95  <- Teste_corr_a_s_alpha(karate, C_B_alpha, 0.95)[[1]]
+corr_a_alpha_ls_99  <- Teste_corr_a_s_alpha(karate, C_B_alpha, 0.99)[[1]]
+
+# A eig
+corr_aeigenvector_ls_2  <- Teste_corr_eig_aa_s(karate, 0.2)[[1]]
+corr_aeigenvector_ls_15  <- Teste_corr_eig_aa_s(karate, 0.15)[[1]]
+corr_aeigenvector_ls_1  <- Teste_corr_eig_aa_s(karate, 0.1)[[1]]
+corr_aeigenvector_ls_05  <- Teste_corr_eig_aa_s(karate, 0.05)[[1]]
+corr_aeigenvector_ls_01  <- Teste_corr_eig_aa_s(karate, 0.01)[[1]]
+```
+
+```{r}
+dta1 <- data.frame(corr_eigenvector_ls_8, corr_eigenvector_ls_85, corr_eigenvector_ls_9, corr_eigenvector_ls_95, corr_eigenvector_ls_99)
+dta2 <- data.frame(corr_eigenvector_ls_8b, corr_eigenvector_ls_85b, corr_eigenvector_ls_9b, corr_eigenvector_ls_95b, corr_eigenvector_ls_99b)
+
+colnames(dta1) <- c("\u03B1 = 0.80", "\u03B1 = 0.85", "\u03B1 = 0.90", "\u03B1 = 0.95", "\u03B1 = 0.99")
+colnames(dta2) <- c("\u03B1 = 0.2500", "\u03B1 = 0.1765", "\u03B1 = 0.1111", "\u03B1 = 0.0526", "\u03B1 = 0.0101")
+```
+
+```{r results = 'asis'}
+# Criando tabelas com add_header_above usando texto simples
+tabela1 <- kable(dta1, format = "html") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover"), 
+    full_width = FALSE,
+    position = "center"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  add_header_above(
+    c("Bα com autovetor" = ncol(dta1)),
+    bold = TRUE,
+    align = "center"
+  )
+
+tabela2 <- kable(dta2, format = "html") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover"), 
+    full_width = FALSE,
+    position = "center"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  add_header_above(
+    c("Aα com autovetor correspondente" = ncol(dta2)),
+    bold = TRUE,
+    align = "center"
+  )
+
+# Colocando lado a lado
+kables(
+  list(tabela1, tabela2),
+  format = "html"
+) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover"),
+    full_width = FALSE,
+    position = "center"
+  )
+```
+
+
+
+```{r}
+dta1 <- data.frame(corr_a_alpha_ls_8, corr_a_alpha_ls_85, corr_a_alpha_ls_9, corr_a_alpha_ls_95, corr_a_alpha_ls_99)
+
+colnames(dta1) <- c("\u03B1 = 0.80", "\u03B1 = 0.85", "\u03B1 = 0.90", "\u03B1 = 0.95", "\u03B1 = 0.99")
+```
+
+<br><br>
+
+<div style="text-align: center;"> $B_{\alpha}$ com $A_{\alpha}$</div>
+
+```{r}
+gt(dta1) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels()
+)
+```
+
+```{r}
+dta1 <- data.frame(corr_aeigenvector_ls_2, corr_aeigenvector_ls_15, corr_aeigenvector_ls_1, corr_aeigenvector_ls_05, corr_aeigenvector_ls_01)
+
+colnames(dta1) <- c("\u03B1 = 0.20", "\u03B1 = 0.15", "\u03B1 = 0.10", "\u03B1 = 0.05", "\u03B1 = 0.01")
+```
+<br><br>
+
+<div style="text-align: center;"> $A_{\alpha}$ com autovetor</div>
+
+```{r}
+gt(dta1) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels()
+)
+```

@@ -1,0 +1,1080 @@
+---
+title: "Tabelas"
+author: "Leonardo Calil"
+date: r Sys.Date()
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+# Pacotes
+
+library("knitr")
+library("kableExtra")
+library("igraph")
+library("rgraph6")
+library("formattable")
+library("dplyr")
+library("purrr")
+library("gridExtra")
+library("gt")
+library("flextable")
+library("DT")
+library("forcats")
+
+# Lista dos grafos
+
+t3 <- readLines("../lista_grafos/list_2_graphs.g6")
+lista_grafos_3v <- igraph_from_graph6(t3)
+
+t4 <- readLines("../lista_grafos/list_4_graphs.g6")
+lista_grafos_4v <- igraph_from_graph6(t4)
+
+t5 <- readLines("../lista_grafos/list_8_graphs.g6")
+lista_grafos_5v <- igraph_from_graph6(t5)
+
+t6 <- readLines("../lista_grafos/list_19_graphs.g6")
+lista_grafos_6v <- igraph_from_graph6(t6)
+
+t7 <- readLines("../lista_grafos/list_30_graphs.g6")
+lista_grafos_7v <- igraph_from_graph6(t7)
+
+t8 <- readLines("../lista_grafos/list_43_graphs.g6")
+lista_grafos_8v <- igraph_from_graph6(t8)
+
+lista_td_grafos <- c(lista_grafos_3v, lista_grafos_4v, lista_grafos_5v, lista_grafos_6v, lista_grafos_7v, lista_grafos_8v)
+
+id <- c(t3,t4,t5,t6,t7,t8)
+
+cd <- list()
+cc <- list()
+cb <- list()
+ck_walk <- list()
+ckatz <- list()
+ceig <- list()
+ccent <- list()
+cdelta <- list()
+cinf <- list()
+ckirk <- list()
+c_A <- list()
+c_B <- list()
+
+cd_t <- list()
+cc_t <- list()
+cb_t <- list()
+ck_walk_t <- list()
+ckatz_t <- list()
+ceig_t <- list()
+ccent_t <- list()
+cdelta_t <- list()
+cinf_t <- list()
+ckirk_t <- list()
+c_A_t <- list()
+c_B_t <- list()
+# centralidade de grau
+
+for (i in 1:106) {
+  ini <- Sys.time()
+  cd[[i]] <- degree(lista_td_grafos[[i]])
+  fim <- Sys.time()
+  cd_t[[i]] <- fim - ini
+}
+
+
+# centralidade de proximidade
+
+for (i in 1:106) {
+  ini <- Sys.time()
+  cc[[i]] <- round(closeness(lista_td_grafos[[i]]), 5)
+  fim <- Sys.time()
+  cc_t[[i]] <- fim - ini
+}
+
+
+#centralidade de intermediaçao 
+
+for (i in 1:106) {
+  ini <- Sys.time()
+  cb[[i]] <- round(betweenness(lista_td_grafos[[i]], directed = F), 5)
+  fim <- Sys.time()
+  cb_t[[i]] <- fim - ini
+}
+
+# centralidade de K-Passeio
+
+for (i in 1:106) {
+  ini <- Sys.time()
+  k <- 2
+  for (n in 1:k) {
+    B <- as.matrix(as_adjacency_matrix(lista_td_grafos[[i]]))
+    if (n == 1){
+      c<-0
+    }
+    else{
+      for (j in 1:(n-1)){
+        B <- B%*%as.matrix(as_adjacency_matrix(lista_td_grafos[[i]]))
+      }
+    }
+    c <- B + c
+  }
+  ck_walk[[i]] <- as.vector(t(c%*%as.vector(rep(1,ncol(as.matrix(as_adjacency_matrix(lista_td_grafos[[i]])))))))
+  fim <- Sys.time()
+  ck_walk_t[[i]] <- fim - ini
+}
+
+#centralidade de Katz 
+
+
+for (i in 1:106) {
+  ini <- Sys.time()
+  ckatz[[i]] <- round(alpha.centrality(lista_td_grafos[[i]], alpha = (round(1/eigen_centrality(lista_td_grafos[[i]], directed = F, scale = T, weights = NULL)$value,3) - 0.01)), 3)
+  fim <- Sys.time()
+  ckatz_t[[i]] <- fim - ini
+}
+
+# centralidade de autovetor 
+
+for (i in 1:106) {
+  ini <- Sys.time()
+  ceig[[i]] <- round(eigen_centrality(lista_td_grafos[[i]], directed = F, scale = T, weights = NULL)$vector, 5)
+  fim <- Sys.time()
+  ceig_t[[i]] <- fim - ini
+}
+
+#centralidade de centroide
+
+for (i in 1:106) {
+  ini <- Sys.time()
+  ccent[[i]] <- round(distances(lista_td_grafos[[i]])[2,], 5)
+  fim <- Sys.time()
+  ccent_t[[i]] <- fim - ini
+}
+
+#centralidade delta
+
+cde <- vector()
+
+for (i in 1:106) {
+  ini <- Sys.time()
+  cde <- vector()
+  for (j in 1:vcount(lista_td_grafos[[i]])){
+    adj <- as.matrix(as_adjacency_matrix(lista_td_grafos[[i]]))
+    cde <- c(cde,(ecount(lista_td_grafos[[i]]) - ecount(graph_from_adjacency_matrix(adj[-j,-j],mode = "undirected", weighted = NULL)))/ecount(lista_td_grafos[[i]]))
+  }
+  cdelta[[i]] <- round(cde,5)
+  fim <- Sys.time()
+  cdelta_t[[i]] <- fim - ini
+}
+
+# centralidade de kirkland
+
+
+for (i in 1:106) {
+  ini <- Sys.time()
+  ck <- vector()
+  autval <- round(sort(eigen(as.matrix(laplacian_matrix(lista_td_grafos[[i]])))$values),10)[2]
+  
+  for (j in 1:vcount(lista_td_grafos[[i]])){
+    adj <- as.matrix(as_adjacency_matrix(lista_td_grafos[[i]]))
+    ck <- c(ck,((round(sort(eigen(laplacian_matrix(graph_from_adjacency_matrix(adj[-j,-j])))$values),10)[2])/(autval)))
+  }
+  ckirk[[i]] <-round(ck, 5)
+  fim <- Sys.time()
+  ckirk_t[[i]] <- fim - ini
+}
+
+# centralidade de informacao
+
+#install.packages('sna')
+library('sna')
+
+for (i in 1:106) {
+  ini <- Sys.time()
+  cinf[[i]] <- infocent(as.matrix(as_adjacency_matrix(lista_td_grafos[[i]])), gmode = "graph", rescale = F)
+  cinf[[i]] <- round(cinf[[i]],5)
+  fim <- Sys.time()
+  cinf_t[[i]] <- fim - ini
+}
+
+detach("package:sna", unload = TRUE)
+
+#cores
+
+library(kableExtra)
+
+#data frame 
+
+df <- data.frame(id)
+df$cd <- cd
+df$cc <- cc
+df$cb <- cb
+df$ck_walk <- ck_walk
+df$ckatz <- ckatz
+df$ceig <- ceig
+df$ccent <- ccent
+df$cdelta <- cdelta
+df$cinf <- cinf
+df$ckirk <- ckirk
+
+
+df_3v <- df[c(1:2),]
+df_4v <- df[c(3:6),]
+df_5v <- df[c(7:14),]
+df_6v <- df[c(15:33),]
+df_7v <- df[c(34:63),]
+df_8v <- df[c(64:106),]
+
+# centralidade A_alpha
+
+A_alpha_cent <- function(g, a) {
+  Aa <- ((a * diag(degree(g))) + ((1 - a) * as.matrix(as_adjacency_matrix(g))))
+  
+  indice <- which.max(eigen(Aa)$values)
+  
+  return(round(abs(eigen(Aa)$vectors[, indice]),5))
+}
+
+A_alpha_cent_all <- function(g) {
+  dados_a <- c()
+  n <- max(V(g))
+  for (a in seq(0, 0.9, by = 0.1)) {
+    if (a == 0.5) {
+      dados_a <- c(dados_a, rep(0, n))
+    }
+    else{
+      Aa <- ((a * diag(degree(g))) + ((1 - a) * as.matrix(as_adjacency_matrix(g))))
+      
+      indice <- which.max(eigen(Aa)$values)
+      
+      dados_a <- c(dados_a, abs(round(eigen(Aa)$vectors[, indice], 5)))
+    }
+  }
+  return(matrix(
+    dados_a,
+    nrow = 10,
+    ncol = n,
+    byrow = T
+  ))
+}
+
+c_a_0 <- list()
+c_a_1 <- list()
+c_a_2 <- list()
+c_a_3 <- list()
+c_a_4 <- list()
+c_a_5 <- list()
+c_a_6 <- list()
+c_a_7 <- list()
+c_a_8 <- list()
+c_a_9 <- list()
+
+for (i in 1:106) {
+  c_A[[i]] <- A_alpha_cent_all(lista_td_grafos[[i]])
+  
+  c_a_0[[i]] <- c_A[[i]][1,]
+  c_a_1[[i]] <- c_A[[i]][2,]
+  c_a_2[[i]] <- c_A[[i]][3,]
+  c_a_3[[i]] <- c_A[[i]][4,]
+  c_a_4[[i]] <- c_A[[i]][5,]
+  c_a_5[[i]] <- c_A[[i]][6,]
+  c_a_6[[i]] <- c_A[[i]][7,]
+  c_a_7[[i]] <- c_A[[i]][8,]
+  c_a_8[[i]] <- c_A[[i]][9,]
+  c_a_9[[i]] <- c_A[[i]][10,]
+}
+
+df_a <- data.frame(id)
+df_a$zero <- c_a_0
+df_a$um <- c_a_1
+df_a$dois <- c_a_2
+df_a$tres <- c_a_3
+df_a$quatro <- c_a_4
+df_a$cinco <- c_a_5
+df_a$seis <- c_a_6
+df_a$sete <- c_a_7
+df_a$oito <- c_a_8
+df_a$nove <- c_a_9
+
+# c_A
+
+# centralidade B_alpha
+
+B_alpha_cent <- function(g, a) {
+  L = diag(degree(g)) - as.matrix(as_adjacency_matrix(g))
+  
+  Bb <- (a * as.matrix(as_adjacency_matrix(g)) + ((1 - a) * L))
+  
+  indice <- which.max(eigen(Bb)$values)
+  
+  Cc <- round(eigen(Bb)$vectors[, indice],8)
+  
+  if (all(Cc < 0)) {
+    return(abs(Cc))
+  }
+  
+  else{
+    return(Cc)
+  }
+}
+
+B_alpha_cent_all <- function(g) {
+  dados_b <- c()
+  n <- max(V(g))
+  for (a in seq(0, 0.9, by = 0.1)) {
+    if (a == 0.5) {
+      dados_b <- c(dados_b, rep(0, n))
+    }
+    else{
+      
+      L = diag(degree(g)) - as.matrix(as_adjacency_matrix(g))
+      
+      Bb <- (a * as.matrix(as_adjacency_matrix(g)) + ((1 - a) * L))
+      
+      indice <- which.max(eigen(Bb)$values)
+      
+      bb <- round(eigen(Bb)$vectors[, indice],5)
+      
+      if (all(bb < 0)) {
+        dados_b <- c(dados_b,abs(bb))
+      }
+      
+      else{
+        dados_b <- c(dados_b, bb)
+      }
+    }
+  }
+  return(matrix(
+    dados_b,
+    nrow = 10,
+    ncol = n,
+    byrow = T
+  ))
+}
+
+c_b_0 <- list()
+c_b_1 <- list()
+c_b_2 <- list()
+c_b_3 <- list()
+c_b_4 <- list()
+c_b_5 <- list()
+c_b_6 <- list()
+c_b_7 <- list()
+c_b_8 <- list()
+c_b_9 <- list()
+
+for (i in 1:106) {
+  c_B[[i]] <- abs(B_alpha_cent_all(lista_td_grafos[[i]]))
+  
+  c_b_0[[i]] <- c_B[[i]][1,]
+  c_b_1[[i]] <- c_B[[i]][2,]
+  c_b_2[[i]] <- c_B[[i]][3,]
+  c_b_3[[i]] <- c_B[[i]][4,]
+  c_b_4[[i]] <- c_B[[i]][5,]
+      c_b_5[[i]] <- c_B[[i]][6,]
+      c_b_6[[i]] <- c_B[[i]][7,]
+      c_b_7[[i]] <- c_B[[i]][8,]
+      c_b_8[[i]] <- c_B[[i]][9,]
+      c_b_9[[i]] <- c_B[[i]][10,]
+    }
+
+df_b <- data.frame(id)
+df_b$zero <- c_b_0
+df_b$um <- c_b_1
+df_b$dois <- c_b_2
+df_b$tres <- c_b_3
+df_b$quatro <- c_b_4
+df_b$cinco <- c_b_5
+df_b$seis <- c_b_6
+df_b$sete <- c_b_7
+df_b$oito <- c_b_8
+df_b$nove <- c_b_9
+
+## Comparar B_a com com todas as medidas de centralidade (pelo indice de maior importancia\central)
+
+# centralidade B_a com alpha variando (alpha maior que 0,5) OBS: mais central 
+
+negativo_B_a <- vector()
+
+for (i in 1:106) {
+  c <- which.max(abs(c_b_6[[i]])) 
+  if (c == which.max(abs(c_b_7[[i]])) &&
+      c == which.max(abs(c_b_8[[i]])) &&
+      c == which.max(abs(c_b_9[[i]]))) {
+    next
+  }
+  else{
+    negativo_B_a <- c(negativo_B_a,i) 
+    plot(lista_td_grafos[[i]])
+    print(i)
+    print('-')
+    print(which.max(abs(c_b_6[[i]]))) 
+    print(which.max(abs(c_b_7[[i]])))
+    print(which.max(abs(c_b_8[[i]])))
+    print(which.max(abs(c_b_9[[i]])))
+    print('-')
+  }
+}
+
+# O mais central troca do vertice 7 pro 6 
+
+plot(lista_td_grafos[[48]])
+df_b[48,]
+
+# centralidade B_a com alpha variando (alpha maior que 0,5) OBS: menos central 
+
+negativo_B_a <- vector()
+
+for (i in 1:106) {
+  c <- which.min(abs(c_b_6[[i]])) 
+  if (c == which.min(abs(c_b_7[[i]])) &&
+      c == which.min(abs(c_b_8[[i]])) &&
+      c == which.min(abs(c_b_9[[i]]))) {
+    next
+  }
+  else{
+    negativo_B_a <- c(negativo_B_a,i) 
+    plot(lista_td_grafos[[i]])
+    print(i)
+    print('-')
+    print(which.min(abs(c_b_6[[i]]))) 
+    print(which.min(abs(c_b_7[[i]])))
+    print(which.min(abs(c_b_8[[i]])))
+    print(which.min(abs(c_b_9[[i]])))
+    print('-')
+  }
+}
+
+# A alpha e B alpha com 0.6 e 0.9
+
+C_A_01 <- list()
+C_A_t01 <- list()
+C_A_02 <- list()
+C_A_t02 <- list()
+C_A_03 <- list()
+C_A_t03 <- list()
+C_A_04 <- list()
+C_A_t04 <- list()
+C_A_05 <- list()
+C_A_t05 <- list()
+C_A_06 <- list()
+C_A_t06 <- list()
+C_A_07 <- list()
+C_A_t07 <- list()
+C_A_08 <- list()
+C_A_t08 <- list()
+C_A_09 <- list()
+C_A_t09 <- list()
+
+for(i in 1:106){
+  
+  ini <- Sys.time()
+  C_A_01[[i]] <- A_alpha_cent(lista_td_grafos[[i]],0.1)
+  fim <- Sys.time()
+  C_A_t01[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_A_02[[i]] <- A_alpha_cent(lista_td_grafos[[i]],0.2)
+  fim <- Sys.time()
+  C_A_t02[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_A_03[[i]] <- A_alpha_cent(lista_td_grafos[[i]],0.3)
+  fim <- Sys.time()
+  C_A_t03[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_A_04[[i]] <- A_alpha_cent(lista_td_grafos[[i]],0.4)
+  fim <- Sys.time()
+  C_A_t04[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_A_05[[i]] <- A_alpha_cent(lista_td_grafos[[i]],0.5)
+  fim <- Sys.time()
+  C_A_t05[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_A_06[[i]] <- A_alpha_cent(lista_td_grafos[[i]],0.6)
+  fim <- Sys.time()
+  C_A_t06[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_A_07[[i]] <- A_alpha_cent(lista_td_grafos[[i]],0.7)
+  fim <- Sys.time()
+  C_A_t07[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_A_08[[i]] <- A_alpha_cent(lista_td_grafos[[i]],0.8)
+  fim <- Sys.time()
+  C_A_t08[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_A_09[[i]] <- A_alpha_cent(lista_td_grafos[[i]],0.9)
+  fim <- Sys.time()
+  C_A_t09[[i]] <- fim - ini
+}
+C_B_055 <- list()
+C_B_t055 <- list()
+C_B_06 <- list()
+C_B_t06 <- list()
+C_B_07 <- list()
+C_B_t07 <- list()
+C_B_08 <- list()
+C_B_t08 <- list()
+C_B_09 <- list()
+C_B_t09 <- list()
+C_B_095 <- list()
+C_B_t095 <- list()
+
+
+for(i in 1:106){
+  
+  ini <- Sys.time()
+  C_B_055[[i]] <- B_alpha_cent(lista_td_grafos[[i]],0.55)
+  fim <- Sys.time()
+  C_B_t055[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_B_06[[i]] <- B_alpha_cent(lista_td_grafos[[i]],0.6)
+  fim <- Sys.time()
+  C_B_t06[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_B_07[[i]] <- B_alpha_cent(lista_td_grafos[[i]],0.7)
+  fim <- Sys.time()
+  C_B_t07[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_B_08[[i]] <- B_alpha_cent(lista_td_grafos[[i]],0.8)
+  fim <- Sys.time()
+  C_B_t08[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_B_09[[i]] <- B_alpha_cent(lista_td_grafos[[i]],0.9)
+  fim <- Sys.time()
+  C_B_t09[[i]] <- fim - ini
+  
+  ini <- Sys.time()
+  C_B_095[[i]] <- B_alpha_cent(lista_td_grafos[[i]],0.95)
+  fim <- Sys.time()
+  C_B_t095[[i]] <- fim - ini
+  
+}
+
+# Transformar em fator 
+
+cd_f <- list()
+cc_f <- list()
+cb_f <- list()
+ck_walk_f <- list()
+ckatz_f <- list()
+ceig_f <- list()
+ccent_f <- list()
+cdelta_f <- list()
+cinf_f <- list()
+ckirk_f <- list()
+
+C_A_01_f <- list()
+C_A_02_f <- list()
+C_A_03_f <- list()
+C_A_04_f <- list()
+C_A_05_f <- list()
+C_A_06_f <- list()
+C_A_07_f <- list()
+C_A_08_f <- list()
+C_A_09_f <- list()
+
+C_B_055_f <- list()
+C_B_06_f <- list()
+C_B_07_f <- list()
+C_B_08_f <- list()
+C_B_09_f <- list()
+C_B_095_f <- list()
+
+for(i  in 1:106){
+  cd_f[[i]] <- as.numeric(factor(cd[[i]]))
+  cc_f[[i]] <- as.numeric(factor(cc[[i]]))
+  cb_f[[i]] <- as.numeric(factor(cb[[i]]))
+  ck_walk_f[[i]] <- as.numeric(factor(ck_walk[[i]]))
+  ckatz_f[[i]] <- as.numeric(factor(ckatz[[i]]))
+  ceig_f[[i]] <- as.numeric(factor(ceig[[i]]))
+  ccent_f[[i]] <- as.numeric(factor(ccent[[i]]))
+  cdelta_f[[i]] <- as.numeric(factor(cdelta[[i]]))
+  cinf_f[[i]] <- as.numeric(factor(cinf[[i]]))
+  ckirk_f[[i]] <- as.numeric(fct_rev(factor(ckirk[[i]])))
+  
+  C_A_01_f[[i]] <- as.numeric(factor(C_A_01[[i]]))
+  C_A_02_f[[i]] <- as.numeric(factor(C_A_02[[i]]))
+  C_A_03_f[[i]] <- as.numeric(factor(C_A_03[[i]]))
+  C_A_04_f[[i]] <- as.numeric(factor(C_A_04[[i]]))
+  C_A_05_f[[i]] <- as.numeric(factor(C_A_05[[i]]))
+  C_A_06_f[[i]] <- as.numeric(factor(C_A_06[[i]]))
+  C_A_07_f[[i]] <- as.numeric(factor(C_A_07[[i]]))
+  C_A_08_f[[i]] <- as.numeric(factor(C_A_08[[i]]))
+  C_A_09_f[[i]] <- as.numeric(factor(C_A_09[[i]]))
+  
+  
+  C_B_055_f[[i]] <- as.numeric(factor(C_B_055[[i]]))
+  C_B_06_f[[i]] <- as.numeric(factor(C_B_06[[i]]))
+  C_B_07_f[[i]] <- as.numeric(factor(C_B_07[[i]]))
+  C_B_08_f[[i]] <- as.numeric(factor(C_B_08[[i]]))
+  C_B_09_f[[i]] <- as.numeric(factor(C_B_09[[i]]))
+  C_B_095_f[[i]] <- as.numeric(factor(C_B_095[[i]]))
+}
+
+# DFcomp data frame com a sequencia dos graus menos central (1) ao mais central
+
+DFcomp <- data.frame(id = id)
+DFcomp$CD <- cd_f
+#DFcomp$CC <- cc_f
+#DFcomp$CB <- cb_f
+#DFcomp$CK_walk <- ck_walk_f
+#DFcomp$Ckatz <- ckatz_f
+DFcomp$Ceig <- ceig_f
+#DFcomp$Ccent <- ccent_f
+#DFcomp$Cdelta <- cdelta_f
+#DFcomp$Cinf <- cinf_f
+DFcomp$Ckirk <- ckirk_f
+
+DFcomp$A_alpha_01 <- C_A_01_f
+DFcomp$A_alpha_02 <- C_A_02_f
+DFcomp$A_alpha_03 <- C_A_03_f
+DFcomp$A_alpha_04 <- C_A_04_f
+DFcomp$A_alpha_05 <- C_A_05_f
+DFcomp$A_alpha_06 <- C_A_06_f
+DFcomp$A_alpha_07 <- C_A_07_f
+DFcomp$A_alpha_08 <- C_A_08_f
+DFcomp$A_alpha_09 <- C_A_09_f
+
+DFcomp$B_alpha_055 <- C_B_055_f
+DFcomp$B_alpha_06 <- C_B_06_f
+DFcomp$B_alpha_07 <- C_B_07_f
+DFcomp$B_alpha_08 <- C_B_08_f
+DFcomp$B_alpha_09 <- C_B_09_f
+DFcomp$B_alpha_095 <- C_B_095_f
+
+
+df_3v <- DFcomp[c(1:2),]
+df_4v <- DFcomp[c(3:6),]
+df_5v <- DFcomp[c(7:14),]
+df_6v <- DFcomp[c(15:33),]
+df_7v <- DFcomp[c(34:63),]
+df_8v <- DFcomp[c(64:106),]
+
+```
+
+# Todos os Grafos
+
+## 3 Vértices 
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_3v[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_3v[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+## 4 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_4v[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_4v[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+## 5 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_5v[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_5v[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+## 6 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_6v[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_6v[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+## 7 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_7v[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_7v[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+## 8 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_8v[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_8v[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+<hr style="height: 2px; background-color: #000; border: none; color: #000;">
+
+# Arvores
+
+```{r echo=FALSE}
+
+df_3va <- df_3v[c(2),]
+df_4va <- df_4v[c(1,2),]
+
+df_5va <- df_5v[c(1,4,7),]
+df_6va <- df_6v[c(1,2,3,6,9,11),]
+
+df_7va <- df_7v[c(2,4,6,8,10,11,12,13,20,21,26),]
+df_8va <- df_8v[c(4,5,6,8,10,13,14,15,16,17,19,21,22,23,24,25,35,36,37,38,39,40,41),]
+```
+
+
+## 3 Vértices 
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_3va[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_3va[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Ciclicos
+
+```{r echo=FALSE}
+
+df_3vc <- df_3v[-c(2),]
+df_4vc <- df_4v[-c(1,2),]
+
+df_5vc <- df_5v[-c(1,4,7),]
+df_6vc <- df_6v[-c(1,2,3,6,9,11),]
+
+df_7vc <- df_7v[-c(2,4,6,8,10,11,12,13,20,21,26),]
+df_8vc <- df_8v[-c(4,5,6,8,10,13,14,15,16,17,19,21,22,23,24,25,35,36,37,38,39,40,41),]
+```
+
+## 3 Vértices 
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_3vc[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_3vc[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Arvores
+
+## 4 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_4va[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_4va[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Ciclicos
+
+## 4 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_4vc[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_4vc[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Arvores
+
+## 5 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_5va[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_5va[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Ciclicos
+
+## 5 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_5vc[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_5vc[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Arvores
+
+## 6 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_6va[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_6va[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Ciclicos
+
+## 6 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_6vc[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_6vc[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Arvores
+
+## 7 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_7va[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_7va[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Ciclicos
+
+## 7 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_7vc[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_7vc[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Arvores
+
+## 8 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_8va[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_8va[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+# Ciclicos
+
+## 8 Vértices
+
+### B_alpha
+```{r echo=FALSE} 
+datatable(df_8vc[,c(1,2,3,4,14,15,16,17,18,19)])
+```
+### A_alpha
+```{r echo=FALSE} 
+datatable(df_8vc[,c(1,5,6,7,8,9,10,11,12,13)])
+```
+
+<hr style="height: 2px; background-color: #000; border: none; color: #000;">
+
+# Diferenças de centralidade entre o vértices mais central (B~alpha~)
+
+```{r echo=FALSE}
+plot(lista_td_grafos[[48]])
+```
+
+## id: `r DFcomp[48,1]`
+
+## Centralidade (alpha = 0.6): `r C_B_06[[48]]` 
+## Centralidade (alpha = 0.7): `r C_B_07[[48]]` 
+## Centralidade (alpha = 0.8): `r C_B_08[[48]]` 
+## Centralidade (alpha = 0.9): `r C_B_09[[48]]`
+## Centralidade (alpha = 0.95): `r C_B_095[[48]]` 
+
+<hr style="height: 2px; background-color: #000; border: none; color: #000;">
+
+# Diferenças de centralidade entre o vértices menos central (B~alpha~)
+
+```{r echo=FALSE}
+plot(lista_td_grafos[[18]])
+```
+
+## id: `r DFcomp[18,1]`
+
+## Centralidade (alpha = 0.55): `r C_B_055[[18]]` 
+## Centralidade (alpha = 0.6): `r C_B_06[[18]]` 
+## Centralidade (alpha = 0.7): `r C_B_07[[18]]` 
+## Centralidade (alpha = 0.8): `r C_B_08[[18]]` 
+## Centralidade (alpha = 0.9): `r C_B_09[[18]]`
+## Centralidade (alpha = 0.95): `r C_B_095[[18]]` 
+
+<hr style="height: 2px; background-color: #000; border: none; color: #000;">
+
+
+```{r echo=FALSE}
+plot(lista_td_grafos[[34]])
+```
+
+## id: `r DFcomp[34,1]`
+
+## Centralidade (alpha = 0.6): `r C_B_06[[34]]` 
+## Centralidade (alpha = 0.7): `r C_B_07[[34]]` 
+## Centralidade (alpha = 0.8): `r C_B_08[[34]]` 
+## Centralidade (alpha = 0.9): `r C_B_09[[34]]`
+## Centralidade (alpha = 0.95): `r C_B_095[[34]]` 
+
+<hr style="height: 2px; background-color: #000; border: none; color: #000;">
+
+```{r echo=FALSE}
+plot(lista_td_grafos[[36]])
+```
+
+
+## id: `r DFcomp[36,1]`
+
+## Centralidade (alpha = 0.6): `r C_B_06[[36]]` 
+## Centralidade (alpha = 0.7): `r C_B_07[[36]]` 
+## Centralidade (alpha = 0.8): `r C_B_08[[36]]` 
+## Centralidade (alpha = 0.9): `r C_B_09[[36]]`
+## Centralidade (alpha = 0.95): `r C_B_095[[36]]` 
+
+<hr style="height: 2px; background-color: #000; border: none; color: #000;">
+
+```{r echo=FALSE}
+plot(lista_td_grafos[[38]])
+```
+
+## id: `r DFcomp[38,1]`
+
+## Centralidade (alpha = 0.6): `r C_B_06[[38]]` 
+## Centralidade (alpha = 0.7): `r C_B_07[[38]]` 
+## Centralidade (alpha = 0.8): `r C_B_08[[38]]` 
+## Centralidade (alpha = 0.9): `r C_B_09[[38]]`
+## Centralidade (alpha = 0.95): `r C_B_095[[38]]` 
+
+<hr style="height: 2px; background-color: #000; border: none; color: #000;">
+
+```{r echo=FALSE}
+plot(lista_td_grafos[[48]])
+```
+
+
+## id: `r DFcomp[48,1]`
+
+## Centralidade (alpha = 0.6): `r C_B_06[[48]]` 
+## Centralidade (alpha = 0.7): `r C_B_07[[48]]` 
+## Centralidade (alpha = 0.8): `r C_B_08[[48]]` 
+## Centralidade (alpha = 0.9): `r C_B_09[[48]]`
+## Centralidade (alpha = 0.95): `r C_B_095[[48]]` 
+
+<hr style="height: 2px; background-color: #000; border: none; color: #000;">
+
+```{r echo=FALSE}
+plot(lista_td_grafos[[65]])
+```
+
+
+## id: `r DFcomp[65,1]`
+
+## Centralidade (alpha = 0.6): `r C_B_06[[65]]` 
+## Centralidade (alpha = 0.7): `r C_B_07[[65]]` 
+## Centralidade (alpha = 0.8): `r C_B_08[[65]]` 
+## Centralidade (alpha = 0.9): `r C_B_09[[65]]`
+## Centralidade (alpha = 0.95): `r C_B_095[[65]]` 
+
+<hr style="height: 2px; background-color: #000; border: none; color: #000;">
+
+```{r echo=FALSE}
+plot(lista_td_grafos[[95]])
+```
+
+## id: `r DFcomp[95,1]`
+
+## Centralidade (alpha = 0.6): `r C_B_06[[95]]` 
+## Centralidade (alpha = 0.7): `r C_B_07[[95]]` 
+## Centralidade (alpha = 0.8): `r C_B_08[[95]]` 
+## Centralidade (alpha = 0.9): `r C_B_09[[95]]`
+## Centralidade (alpha = 0.95): `r C_B_095[[95]]` 
+
+<hr style="height: 2px; background-color: #000; border: none; color: #000;">
+
+# Tempo computacional (Em segundos)
+
+```{r echo=FALSE}
+DFcompt <- data.frame(id = id)
+DFcompt$CD <- round(as.numeric(cd_t),4)
+DFcompt$CC <- round(as.numeric(cc_t),4)
+DFcompt$CB <- round(as.numeric(cb_t),4)
+DFcompt$CK_walk <- round(as.numeric(ck_walk_t),4)
+DFcompt$Ckatz <- round(as.numeric(ceig_t),4)
+DFcompt$Ccent <- round(as.numeric(ccent_t),4)
+DFcompt$Cdelta <- round(as.numeric(cdelta_t),4)
+DFcompt$Cinf <- round(as.numeric(cinf_t),4)
+DFcompt$Ckirk <- round(as.numeric(ckirk_t),4)
+
+DFcompt$A_alpha_06 <- round(as.numeric(C_A_t06),4)
+DFcompt$A_alpha_09 <- round(as.numeric(C_A_t09),4)
+DFcompt$B_alpha_06 <- round(as.numeric(C_B_t06),4)
+DFcompt$B_alpha_09 <- round(as.numeric(C_B_t09),4)
+
+datatable(DFcompt)
+```
+
+## Média dos tempos computacionais por número de vértices 
+
+```{r echo=FALSE}
+Vertices <- c(rep(3,2),
+           rep(4,4),
+           rep(5,8),
+           rep(6,19),
+           rep(7,30),
+           rep(8,43))
+
+DFcompt$Vertices <- Vertices
+
+DFresumo <- aggregate(DFcompt[, -c(1, ncol(DFcompt))], by = list(Vertices = DFcompt$Vertices), FUN = mean) 
+DFresumo[,-1] <- round(DFresumo[, -1], 4)
+
+DFresumo$Vertices <- c("3 vertices", "4 vertices", "5 vertices", "6 vertices", "7 vertices", "8 vertices")
+
+datatable(DFresumo)
+```
+

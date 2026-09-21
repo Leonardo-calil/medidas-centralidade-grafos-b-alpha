@@ -1,0 +1,333 @@
+---
+title: "Informação dos outliers"
+author: "Leonardo Calil"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    tc_float: true
+---
+
+```{r setup, include=FALSE}
+
+# Pacotes
+library("foreach")
+library("doParallel")
+library("knitr")
+library("tidyr")
+library("kableExtra")
+library("igraph")
+library("rgraph6")
+library("formattable")
+library("dplyr")
+library("purrr")
+library("gridExtra")
+library("gt")
+library("flextable")
+library("DT")
+library("forcats")
+library("plotly")
+
+##### Lista dos grafos ####
+
+source("Script/Base de dados house graphs.R")
+
+##### Funcoes das medidas de centralidade ####
+
+source("Script/Funcao das medidas de centralidades.R")
+
+##### Funcoes dos testes estatisticos ####
+
+source("Script/Funcao dos testes estatisticos.R")
+source("Script/Funcao detalhes de grafos.R")
+
+##### Funcoes da geracao de grafos ####
+
+source("Script/Funcao geradora da base artificial de assis et all (LAURA).R")
+
+source("Script/Funcao geradora de grafos.R")
+
+##### Chunk options ####
+
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+```{r Bases}
+
+# b002
+b002 <- lista_td_grafos
+
+# b003.1
+
+set.seed(1010)
+b003.1 <- readRDS("lista_grafos/grafos_mst.rds")
+
+# b003.2
+
+set.seed(1010)
+b003.2 <- readRDS("lista_grafos/grafos_ec.rds")
+
+bzoo <- readRDS("lista_grafos/grafos_topology_zoo.rds")
+```
+
+# Base do house graphs
+
+## 6 Vértices
+
+```{r}
+
+arv <- list()
+uni <- list()
+
+tdg <- lista_grafos_6v
+
+for (valor in tdg) {
+  if (gsize(valor) == 5) {
+    arv[[length(arv) + 1]] <- valor
+  }
+  else if (gsize(valor) == 6) {
+    uni[[length(uni) + 1]] <- valor
+  }
+}
+
+```
+
+### Arvores
+
+```{r}
+v <- c()
+
+for(i in v){
+  plot(arv[[i]],
+       vertex.size = 20,
+       main = paste0("Grafo ", i))
+  cat("B\u03B1 com autovalor (\u03B1 = 0.8): ", Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.8)[[1]])
+}
+```
+
+### uniciclicos
+
+```{r}
+v <- c(9)
+
+for(i in v){
+  plot(uni[[i]],
+       vertex.size = 20,
+       main = paste0("Grafo ", i))
+  cat("B\u03B1 com autovalor (\u03B1 = 0.8): ", Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.8)[[1]])
+}
+```
+
+## 7 Vértices
+
+```{r}
+
+arv <- list()
+uni <- list()
+
+tdg <- lista_grafos_7v
+
+for (valor in tdg) {
+  if (gsize(valor) == 6) {
+    arv[[length(arv) + 1]] <- valor
+  }
+  else if (gsize(valor) == 7) {
+    uni[[length(uni) + 1]] <- valor
+  }
+}
+
+```
+
+### Arvores
+
+```{r}
+v <- c(4, 7)
+
+for(i in v){
+  plot(arv[[i]],
+       vertex.size = 20,
+       main = paste0("Grafo ", i))
+  cat("B\u03B1 com autovalor (\u03B1 = 0.8): ", Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.8)[[1]])
+}
+```
+
+### uniciclicos
+
+```{r}
+v <- c(7, 11, 13)
+
+for(i in v){
+  plot(uni[[i]],
+       vertex.size = 20,
+       main = paste0("Grafo ", i))
+    cat("B\u03B1 com autovalor (\u03B1 = 0.8): ", Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.8)[[1]])
+}
+```
+
+## 8 Vértices
+
+```{r}
+
+arv <- list()
+uni <- list()
+
+tdg <- lista_grafos_8v
+
+for (valor in tdg) {
+  if (gsize(valor) == 7) {
+    arv[[length(arv) + 1]] <- valor
+  }
+  else if (gsize(valor) == 8) {
+    uni[[length(uni) + 1]] <- valor
+  }
+}
+
+```
+
+### Arvores
+
+```{r}
+v <- c(2, 10, 12, 19)
+
+for(i in v){
+  plot(arv[[i]],
+       vertex.size = 20,
+       main = paste0("Grafo ", i))
+  cat("B\u03B1 com autovalor (\u03B1 = 0.8): ", Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.8)[[1]])
+}
+```
+
+### uniciclicos
+
+```{r}
+v <- c(5, 6, 8, 14)
+
+for(i in v){
+  plot(uni[[i]],
+       vertex.size = 20,
+       main = paste0("Grafo ", i))
+    cat("B\u03B1 com autovalor (\u03B1 = 0.8): ", Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.8)[[1]])
+}
+```
+
+## 9 Vértices
+
+```{r}
+
+arv <- list()
+uni <- list()
+
+tdg <- lista_grafos_9v
+
+for (valor in tdg) {
+  if (gsize(valor) == 8) {
+    arv[[length(arv) + 1]] <- valor
+  }
+  else if (gsize(valor) == 9) {
+    uni[[length(uni) + 1]] <- valor
+  }
+}
+
+```
+
+### Arvores
+
+```{r}
+v <- c(11, 12, 19, 22, 41)
+
+for(i in v){
+  plot(arv[[i]],
+       vertex.size = 20,
+       main = paste0("Grafo ", i))
+  cat("B\u03B1 com autovalor (\u03B1 = 0.8): ", Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.8)[[1]])
+}
+```
+
+### uniciclicos
+
+```{r}
+v <- c(1, 7, 11)
+
+for(i in v){
+  plot(uni[[i]],
+       vertex.size = 20,
+       main = paste0("Grafo ", i))
+  cat("B\u03B1 com autovalor (\u03B1 = 0.8): ", Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.8)[[1]])
+}
+```
+
+# Base Laura
+
+## MST
+
+### Menores correlações 
+
+```{r, results='asis'}
+
+# outliers extremos 
+
+id <- c(208, 376, 462, 809, 894, 983)
+
+for(i in id){
+  cat("\n\n")
+  print(analisar_grafo(b003.1[[i]], paste0(" ", i)))
+}
+```
+
+### Maiores correlações
+
+```{r, results='asis'}
+
+# outliers extremos 
+
+id <- c(117, 315, 398, 501, 748)
+
+for(i in id){
+  cat("\n\n")
+  print(analisar_grafo(b003.1[[i]], paste0(" ", i)))
+}
+```
+
+## Esparço conexo
+
+```{r, results='asis'}
+
+# outliers extremos 
+
+id <- c(101, 296, 325, 336, 396, 419, 460, 567, 690, 692, 879)
+
+for(i in id){
+  cat("\n\n")
+  print(analisar_grafo(b003.2[[i]], paste0(" ", i)))
+}
+
+```
+
+
+# Base Topology Zoo
+
+```{r, results='asis'}
+
+id <- c(2, 45, 107, 152, 279, 324)
+
+for(i in id){
+  cat("\n\n")
+  plot(bzoo[[i]])
+  print(analisar_grafo(bzoo[[i]], paste0(" ", i)))
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

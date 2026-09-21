@@ -1,0 +1,196 @@
+---
+title: "Redes reais Topology zoo"
+author: "Leonardo Calil"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    tc_float: true
+---
+
+```{r setup, include=FALSE}
+
+# Pacotes
+library("foreach")
+library("doParallel")
+library("knitr")
+library("tidyr")
+library("htmltools")
+library("kableExtra")
+library("igraph")
+library("rgraph6")
+library("formattable")
+library("dplyr")
+library("purrr")
+library("gridExtra")
+library("gt")
+library("flextable")
+library("DT")
+library("forcats")
+library("plotly")
+library("igraph")
+library("XML")
+
+##### Funcoes das medidas de centralidade ####
+
+source("Script/Funcao das medidas de centralidades.R")
+
+##### Funcoes dos testes estatisticos ####
+
+source("Script/Funcao dos testes estatisticos.R")
+
+##### Chunk options ####
+
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+options(plotly.offline = FALSE)
+
+```
+
+```{r, results='asis'}
+
+caminho_pasta <- "lista_grafos/topology zoo"
+
+arquivos_gml <- list.files(caminho_pasta, pattern = "\\.gml$", full.names = TRUE, ignore.case = TRUE)
+arquivos_graphml <- list.files(caminho_pasta, pattern = "\\.graphml$", full.names = TRUE, ignore.case = TRUE)
+
+todos_grafos <- list()
+
+for (arquivo in arquivos_gml) {
+  nome <- basename(arquivo)
+  todos_grafos[[nome]] <- read_graph(arquivo, format = "gml")
+}
+
+for (arquivo in arquivos_graphml) {
+  nome <- basename(arquivo)
+  todos_grafos[[nome]] <- read_graph(arquivo, format = "graphml")
+}
+
+# Os Grafos 135 e o 396 foram retirados pois apresentam erros 
+todos_grafos[[135]] <- NULL
+todos_grafos[[395]] <- NULL
+
+grafos_simples <- todos_grafos[sapply(todos_grafos, is_simple)]
+
+grafos_por_vertices <- split(grafos_simples, sapply(grafos_simples, vcount))
+
+saveRDS(grafos_simples, "lista_grafos/grafos_topology_zoo.rds")
+```
+
+# Total
+
+```{r}
+ncr <- max(1, 3)
+n <- length(grafos_simples)
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## B_alpha
+
+# Lista das correlacoes de eigenvector
+
+corr_eigenvector_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(grafos_simples[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_eigenvector_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(grafos_simples[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_eigenvector_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(grafos_simples[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_eigenvector_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(grafos_simples[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_eigenvector_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(grafos_simples[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+stopCluster(cl)
+
+df <- data.frame('alpha_0.8' = unlist(corr_eigenvector_ls_8),
+                 'alpha_0.85' = unlist(corr_eigenvector_ls_85),
+                 'alpha_0.9' = unlist(corr_eigenvector_ls_9),
+                 'alpha_0.95' = unlist(corr_eigenvector_ls_95),
+                 'alpha_0.99' = unlist(corr_eigenvector_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+fig <- plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(
+    title = paste("Boxplot para todos os grafos"),
+    xaxis = list(title = "Número de vértices"),
+    yaxis = list(title = "Correlacão", range = c(-1, 1))
+  )
+
+tagList(fig)
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_eigenvector_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_eigenvector_ls_99)))
+```
+
+# Por número de vértices
+
+```{r, results='asis'}
+
+graficos <- list()
+
+for (n_vertices in names(grafos_por_vertices)) {
+  
+  # Aplicar sua função a cada grafo do grupo
+  corr_eigenvector_ls_8 <- sapply(grafos_por_vertices[[n_vertices]], Teste_corr_s_eigenvector,
+                    centralidade = C_B_alpha,
+                    alpha = 0.8)
+  corr_eigenvector_ls_85 <- sapply(grafos_por_vertices[[n_vertices]], Teste_corr_s_eigenvector,
+                    centralidade = C_B_alpha,
+                    alpha = 0.85)
+  corr_eigenvector_ls_9 <- sapply(grafos_por_vertices[[n_vertices]], Teste_corr_s_eigenvector,
+                    centralidade = C_B_alpha,
+                    alpha = 0.9)
+  corr_eigenvector_ls_95 <- sapply(grafos_por_vertices[[n_vertices]], Teste_corr_s_eigenvector,
+                    centralidade = C_B_alpha,
+                    alpha = 0.95)
+  corr_eigenvector_ls_99 <- sapply(grafos_por_vertices[[n_vertices]], Teste_corr_s_eigenvector,
+                    centralidade = C_B_alpha,
+                    alpha = 0.99)
+  
+  # Fazer o boxplot
+  
+  df <- data.frame('alpha_0.8' = unlist(corr_eigenvector_ls_8),
+                 'alpha_0.85' = unlist(corr_eigenvector_ls_85),
+                 'alpha_0.9' = unlist(corr_eigenvector_ls_9),
+                 'alpha_0.95' = unlist(corr_eigenvector_ls_95),
+                 'alpha_0.99' = unlist(corr_eigenvector_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+fig <- plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(
+    title = paste("Boxplot para grafos com", n_vertices, "vértices"),
+    xaxis = list(title = "Número de vértices"),
+    yaxis = list(title = "Correlação", range = c(-1, 1))
+  )
+
+graficos[[n_vertices]] <- fig
+}
+
+tagList(graficos)
+
+```
+
+

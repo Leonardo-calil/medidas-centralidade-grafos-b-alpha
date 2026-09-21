@@ -1,0 +1,1853 @@
+---
+title: "Correlação base house graphs"
+author: "Leonardo Calil"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    tc_float: true
+---
+
+```{r setup, include=FALSE}
+
+# Pacotes
+library("foreach")
+library("doParallel")
+library("knitr")
+library("tidyr")
+library("kableExtra")
+library("igraph")
+library("rgraph6")
+library("formattable")
+library("dplyr")
+library("purrr")
+library("gridExtra")
+library("gt")
+library("flextable")
+library("DT")
+library("forcats")
+library("plotly")
+
+##### Lista dos grafos ####
+
+source("Script/Base de dados house graphs.R")
+
+##### Funcoes das medidas de centralidade ####
+
+source("Script/Funcao das medidas de centralidades.R")
+
+##### Funcoes dos testes estatisticos ####
+
+source("Script/Funcao dos testes estatisticos.R")
+
+##### Funcoes da geracao de grafos ####
+
+source("Script/Funcao geradora de grafos.R")
+
+##### Chunk options ####
+
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+# 6 Vertices
+
+```{r}
+
+arv <- list()
+uni <- list()
+
+tdg <- lista_grafos_6v
+
+
+for (valor in tdg) {
+  if (gsize(valor) == 5) {
+    arv[[length(arv) + 1]] <- valor
+  }
+  else if (gsize(valor) == 6) {
+    uni[[length(uni) + 1]] <- valor
+  }
+}
+```
+
+```{r}
+
+n <- as.numeric(length(arv))
+ncr <- 3
+```
+
+## Arvores
+
+```{r}
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## B_alpha
+# Lista das correlacoes de grau
+
+corr_degree_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_degree_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_degree_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_degree_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_degree_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_eigenvector_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_eigenvector_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_eigenvector_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_eigenvector_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_eigenvector_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de a_alpha
+
+corr_a_alpha_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_a_alpha_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_a_alpha_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_a_alpha_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_a_alpha_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+stopCluster(cl)
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## A_alpha
+# Lista das correlacoes de grau
+
+corr_adegree_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.2)[[1]]
+}
+corr_adegree_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.15)[[1]]
+}
+corr_adegree_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.1)[[1]]
+}
+corr_adegree_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.05)[[1]]
+}
+corr_adegree_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.01)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_aeigenvector_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.2)[[1]]
+}
+corr_aeigenvector_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.15)[[1]]
+}
+corr_aeigenvector_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.1)[[1]]
+}
+corr_aeigenvector_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.05)[[1]]
+}
+corr_aeigenvector_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.01)[[1]]
+}
+
+stopCluster(cl)
+```
+### Geração dos grafos 
+
+Os grafos foram obtidos através do site house of graphs.
+
+Número de Grafos: `r n` 
+
+### boxplot das corr b_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_eigenvector_ls_8),
+                 'alpha_0.85' = unlist(corr_eigenvector_ls_85),
+                 'alpha_0.9' = unlist(corr_eigenvector_ls_9),
+                 'alpha_0.95' = unlist(corr_eigenvector_ls_95),
+                 'alpha_0.99' = unlist(corr_eigenvector_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_eigenvector_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_eigenvector_ls_99)))
+```
+
+### boxplot das corr de a_alpha
+```{r}
+
+df <- data.frame('alpha_0.2' = unlist(corr_aeigenvector_ls_2),
+                 'alpha_0.15' = unlist(corr_aeigenvector_ls_15),
+                 'alpha_0.1' = unlist(corr_aeigenvector_ls_1),
+                 'alpha_0.05' = unlist(corr_aeigenvector_ls_05),
+                 'alpha_0.01' = unlist(corr_aeigenvector_ls_01))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.2: ", indices_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.2: ", valores_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.15: ", indices_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.15: ", valores_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.1: ", indices_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.1: ", valores_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.05: ", indices_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.05: ", valores_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.01: ", indices_outliers(unlist(corr_aeigenvector_ls_01)))
+paste0("alpha_0.01: ", valores_outliers(unlist(corr_aeigenvector_ls_01)))
+```
+
+### boxplot das corr b_alpha e a_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_a_alpha_ls_8),
+                 'alpha_0.85' = unlist(corr_a_alpha_ls_85),
+                 'alpha_0.9' = unlist(corr_a_alpha_ls_9),
+                 'alpha_0.95' = unlist(corr_a_alpha_ls_95),
+                 'alpha_0.99' = unlist(corr_a_alpha_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_a_alpha_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_a_alpha_ls_99)))
+```
+
+## Uniciclicos
+
+```{r}
+
+n <- as.numeric(length(uni))
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## B_alpha
+# Lista das correlacoes de grau
+
+corr_degree_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_degree_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_degree_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_degree_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_degree_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_eigenvector_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_eigenvector_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_eigenvector_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_eigenvector_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_eigenvector_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de a_alpha
+
+corr_a_alpha_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_a_alpha_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_a_alpha_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_a_alpha_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_a_alpha_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+stopCluster(cl)
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## A_alpha
+# Lista das correlacoes de grau
+
+corr_adegree_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.2)[[1]]
+}
+corr_adegree_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.15)[[1]]
+}
+corr_adegree_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.1)[[1]]
+}
+corr_adegree_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.05)[[1]]
+}
+corr_adegree_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.01)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_aeigenvector_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.2)[[1]]
+}
+corr_aeigenvector_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.15)[[1]]
+}
+corr_aeigenvector_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.1)[[1]]
+}
+corr_aeigenvector_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.05)[[1]]
+}
+corr_aeigenvector_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.01)[[1]]
+}
+
+stopCluster(cl)
+```
+### Geração dos grafos 
+
+Os grafos foram obtidos através do site house of graphs.
+
+Número de Grafos: `r n` 
+
+### boxplot das corr b_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_eigenvector_ls_8),
+                 'alpha_0.85' = unlist(corr_eigenvector_ls_85),
+                 'alpha_0.9' = unlist(corr_eigenvector_ls_9),
+                 'alpha_0.95' = unlist(corr_eigenvector_ls_95),
+                 'alpha_0.99' = unlist(corr_eigenvector_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_eigenvector_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_eigenvector_ls_99)))
+```
+
+### boxplot das corr de a_alpha
+```{r}
+
+df <- data.frame('alpha_0.2' = unlist(corr_aeigenvector_ls_2),
+                 'alpha_0.15' = unlist(corr_aeigenvector_ls_15),
+                 'alpha_0.1' = unlist(corr_aeigenvector_ls_1),
+                 'alpha_0.05' = unlist(corr_aeigenvector_ls_05),
+                 'alpha_0.01' = unlist(corr_aeigenvector_ls_01))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.2: ", indices_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.2: ", valores_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.15: ", indices_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.15: ", valores_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.1: ", indices_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.1: ", valores_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.05: ", indices_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.05: ", valores_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.01: ", indices_outliers(unlist(corr_aeigenvector_ls_01)))
+paste0("alpha_0.01: ", valores_outliers(unlist(corr_aeigenvector_ls_01)))
+```
+
+### boxplot das corr b_alpha e a_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_a_alpha_ls_8),
+                 'alpha_0.85' = unlist(corr_a_alpha_ls_85),
+                 'alpha_0.9' = unlist(corr_a_alpha_ls_9),
+                 'alpha_0.95' = unlist(corr_a_alpha_ls_95),
+                 'alpha_0.99' = unlist(corr_a_alpha_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_a_alpha_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_a_alpha_ls_99)))
+```
+# 7 Vertices
+
+```{r}
+
+arv <- list()
+uni <- list()
+
+tdg <- lista_grafos_7v
+
+
+for (valor in tdg) {
+  if (gsize(valor) == 6) {
+    arv[[length(arv) + 1]] <- valor
+  }
+  else if (gsize(valor) == 7) {
+    uni[[length(uni) + 1]] <- valor
+  }
+}
+```
+
+```{r}
+
+n <- as.numeric(length(arv))
+ncr <- 3
+```
+
+## Arvores
+
+```{r}
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## B_alpha
+# Lista das correlacoes de grau
+
+corr_degree_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_degree_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_degree_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_degree_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_degree_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_eigenvector_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_eigenvector_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_eigenvector_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_eigenvector_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_eigenvector_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de a_alpha
+
+corr_a_alpha_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_a_alpha_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_a_alpha_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_a_alpha_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_a_alpha_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+stopCluster(cl)
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## A_alpha
+# Lista das correlacoes de grau
+
+corr_adegree_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.2)[[1]]
+}
+corr_adegree_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.15)[[1]]
+}
+corr_adegree_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.1)[[1]]
+}
+corr_adegree_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.05)[[1]]
+}
+corr_adegree_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.01)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_aeigenvector_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.2)[[1]]
+}
+corr_aeigenvector_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.15)[[1]]
+}
+corr_aeigenvector_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.1)[[1]]
+}
+corr_aeigenvector_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.05)[[1]]
+}
+corr_aeigenvector_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.01)[[1]]
+}
+
+stopCluster(cl)
+```
+### Geração dos grafos 
+
+Os grafos foram obtidos através do site house of graphs.
+
+Número de Grafos: `r n` 
+
+### boxplot das corr b_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_eigenvector_ls_8),
+                 'alpha_0.85' = unlist(corr_eigenvector_ls_85),
+                 'alpha_0.9' = unlist(corr_eigenvector_ls_9),
+                 'alpha_0.95' = unlist(corr_eigenvector_ls_95),
+                 'alpha_0.99' = unlist(corr_eigenvector_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_eigenvector_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_eigenvector_ls_99)))
+```
+
+### boxplot das corr de a_alpha
+```{r}
+
+df <- data.frame('alpha_0.2' = unlist(corr_aeigenvector_ls_2),
+                 'alpha_0.15' = unlist(corr_aeigenvector_ls_15),
+                 'alpha_0.1' = unlist(corr_aeigenvector_ls_1),
+                 'alpha_0.05' = unlist(corr_aeigenvector_ls_05),
+                 'alpha_0.01' = unlist(corr_aeigenvector_ls_01))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.2: ", indices_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.2: ", valores_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.15: ", indices_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.15: ", valores_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.1: ", indices_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.1: ", valores_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.05: ", indices_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.05: ", valores_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.01: ", indices_outliers(unlist(corr_aeigenvector_ls_01)))
+paste0("alpha_0.01: ", valores_outliers(unlist(corr_aeigenvector_ls_01)))
+```
+
+### boxplot das corr b_alpha e a_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_a_alpha_ls_8),
+                 'alpha_0.85' = unlist(corr_a_alpha_ls_85),
+                 'alpha_0.9' = unlist(corr_a_alpha_ls_9),
+                 'alpha_0.95' = unlist(corr_a_alpha_ls_95),
+                 'alpha_0.99' = unlist(corr_a_alpha_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_a_alpha_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_a_alpha_ls_99)))
+```
+
+## Uniciclicos
+
+```{r}
+
+n <- as.numeric(length(uni))
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## B_alpha
+# Lista das correlacoes de grau
+
+corr_degree_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_degree_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_degree_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_degree_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_degree_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_eigenvector_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_eigenvector_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_eigenvector_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_eigenvector_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_eigenvector_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de a_alpha
+
+corr_a_alpha_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_a_alpha_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_a_alpha_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_a_alpha_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_a_alpha_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+stopCluster(cl)
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## A_alpha
+# Lista das correlacoes de grau
+
+corr_adegree_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.2)[[1]]
+}
+corr_adegree_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.15)[[1]]
+}
+corr_adegree_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.1)[[1]]
+}
+corr_adegree_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.05)[[1]]
+}
+corr_adegree_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.01)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_aeigenvector_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.2)[[1]]
+}
+corr_aeigenvector_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.15)[[1]]
+}
+corr_aeigenvector_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.1)[[1]]
+}
+corr_aeigenvector_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.05)[[1]]
+}
+corr_aeigenvector_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.01)[[1]]
+}
+
+stopCluster(cl)
+```
+### Geração dos grafos 
+
+Os grafos foram obtidos através do site house of graphs.
+
+Número de Grafos: `r n` 
+
+### boxplot das corr b_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_eigenvector_ls_8),
+                 'alpha_0.85' = unlist(corr_eigenvector_ls_85),
+                 'alpha_0.9' = unlist(corr_eigenvector_ls_9),
+                 'alpha_0.95' = unlist(corr_eigenvector_ls_95),
+                 'alpha_0.99' = unlist(corr_eigenvector_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_eigenvector_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_eigenvector_ls_99)))
+```
+
+### boxplot das corr de a_alpha
+```{r}
+
+df <- data.frame('alpha_0.2' = unlist(corr_aeigenvector_ls_2),
+                 'alpha_0.15' = unlist(corr_aeigenvector_ls_15),
+                 'alpha_0.1' = unlist(corr_aeigenvector_ls_1),
+                 'alpha_0.05' = unlist(corr_aeigenvector_ls_05),
+                 'alpha_0.01' = unlist(corr_aeigenvector_ls_01))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.2: ", indices_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.2: ", valores_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.15: ", indices_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.15: ", valores_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.1: ", indices_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.1: ", valores_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.05: ", indices_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.05: ", valores_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.01: ", indices_outliers(unlist(corr_aeigenvector_ls_01)))
+paste0("alpha_0.01: ", valores_outliers(unlist(corr_aeigenvector_ls_01)))
+```
+
+### boxplot das corr b_alpha e a_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_a_alpha_ls_8),
+                 'alpha_0.85' = unlist(corr_a_alpha_ls_85),
+                 'alpha_0.9' = unlist(corr_a_alpha_ls_9),
+                 'alpha_0.95' = unlist(corr_a_alpha_ls_95),
+                 'alpha_0.99' = unlist(corr_a_alpha_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_a_alpha_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_a_alpha_ls_99)))
+```
+# 8 Vertices
+
+```{r}
+
+arv <- list()
+uni <- list()
+
+tdg <- lista_grafos_8v
+
+
+for (valor in tdg) {
+  if (gsize(valor) == 7) {
+    arv[[length(arv) + 1]] <- valor
+  }
+  else if (gsize(valor) == 8) {
+    uni[[length(uni) + 1]] <- valor
+  }
+}
+```
+
+```{r}
+
+n <- as.numeric(length(arv))
+ncr <- 3
+```
+
+## Arvores
+
+```{r}
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## B_alpha
+# Lista das correlacoes de grau
+
+corr_degree_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_degree_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_degree_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_degree_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_degree_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_eigenvector_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_eigenvector_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_eigenvector_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_eigenvector_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_eigenvector_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de a_alpha
+
+corr_a_alpha_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_a_alpha_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_a_alpha_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_a_alpha_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_a_alpha_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+stopCluster(cl)
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## A_alpha
+# Lista das correlacoes de grau
+
+corr_adegree_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.2)[[1]]
+}
+corr_adegree_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.15)[[1]]
+}
+corr_adegree_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.1)[[1]]
+}
+corr_adegree_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.05)[[1]]
+}
+corr_adegree_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.01)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_aeigenvector_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.2)[[1]]
+}
+corr_aeigenvector_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.15)[[1]]
+}
+corr_aeigenvector_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.1)[[1]]
+}
+corr_aeigenvector_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.05)[[1]]
+}
+corr_aeigenvector_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.01)[[1]]
+}
+
+stopCluster(cl)
+```
+### Geração dos grafos 
+
+Os grafos foram obtidos através do site house of graphs.
+
+Número de Grafos: `r n` 
+
+### boxplot das corr b_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_eigenvector_ls_8),
+                 'alpha_0.85' = unlist(corr_eigenvector_ls_85),
+                 'alpha_0.9' = unlist(corr_eigenvector_ls_9),
+                 'alpha_0.95' = unlist(corr_eigenvector_ls_95),
+                 'alpha_0.99' = unlist(corr_eigenvector_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_eigenvector_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_eigenvector_ls_99)))
+```
+
+### boxplot das corr de a_alpha
+```{r}
+
+df <- data.frame('alpha_0.2' = unlist(corr_aeigenvector_ls_2),
+                 'alpha_0.15' = unlist(corr_aeigenvector_ls_15),
+                 'alpha_0.1' = unlist(corr_aeigenvector_ls_1),
+                 'alpha_0.05' = unlist(corr_aeigenvector_ls_05),
+                 'alpha_0.01' = unlist(corr_aeigenvector_ls_01))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.2: ", indices_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.2: ", valores_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.15: ", indices_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.15: ", valores_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.1: ", indices_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.1: ", valores_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.05: ", indices_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.05: ", valores_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.01: ", indices_outliers(unlist(corr_aeigenvector_ls_01)))
+paste0("alpha_0.01: ", valores_outliers(unlist(corr_aeigenvector_ls_01)))
+```
+
+### boxplot das corr b_alpha e a_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_a_alpha_ls_8),
+                 'alpha_0.85' = unlist(corr_a_alpha_ls_85),
+                 'alpha_0.9' = unlist(corr_a_alpha_ls_9),
+                 'alpha_0.95' = unlist(corr_a_alpha_ls_95),
+                 'alpha_0.99' = unlist(corr_a_alpha_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_a_alpha_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_a_alpha_ls_99)))
+```
+
+## Uniciclicos
+
+```{r}
+
+n <- as.numeric(length(uni))
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## B_alpha
+# Lista das correlacoes de grau
+
+corr_degree_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_degree_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_degree_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_degree_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_degree_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_eigenvector_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_eigenvector_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_eigenvector_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_eigenvector_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_eigenvector_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de a_alpha
+
+corr_a_alpha_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_a_alpha_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_a_alpha_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_a_alpha_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_a_alpha_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+stopCluster(cl)
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## A_alpha
+# Lista das correlacoes de grau
+
+corr_adegree_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.2)[[1]]
+}
+corr_adegree_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.15)[[1]]
+}
+corr_adegree_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.1)[[1]]
+}
+corr_adegree_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.05)[[1]]
+}
+corr_adegree_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.01)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_aeigenvector_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.2)[[1]]
+}
+corr_aeigenvector_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.15)[[1]]
+}
+corr_aeigenvector_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.1)[[1]]
+}
+corr_aeigenvector_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.05)[[1]]
+}
+corr_aeigenvector_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.01)[[1]]
+}
+
+stopCluster(cl)
+```
+### Geração dos grafos 
+
+Os grafos foram obtidos através do site house of graphs.
+
+Número de Grafos: `r n` 
+
+### boxplot das corr b_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_eigenvector_ls_8),
+                 'alpha_0.85' = unlist(corr_eigenvector_ls_85),
+                 'alpha_0.9' = unlist(corr_eigenvector_ls_9),
+                 'alpha_0.95' = unlist(corr_eigenvector_ls_95),
+                 'alpha_0.99' = unlist(corr_eigenvector_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_eigenvector_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_eigenvector_ls_99)))
+```
+
+### boxplot das corr de a_alpha
+```{r}
+
+df <- data.frame('alpha_0.2' = unlist(corr_aeigenvector_ls_2),
+                 'alpha_0.15' = unlist(corr_aeigenvector_ls_15),
+                 'alpha_0.1' = unlist(corr_aeigenvector_ls_1),
+                 'alpha_0.05' = unlist(corr_aeigenvector_ls_05),
+                 'alpha_0.01' = unlist(corr_aeigenvector_ls_01))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.2: ", indices_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.2: ", valores_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.15: ", indices_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.15: ", valores_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.1: ", indices_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.1: ", valores_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.05: ", indices_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.05: ", valores_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.01: ", indices_outliers(unlist(corr_aeigenvector_ls_01)))
+paste0("alpha_0.01: ", valores_outliers(unlist(corr_aeigenvector_ls_01)))
+```
+
+### boxplot das corr b_alpha e a_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_a_alpha_ls_8),
+                 'alpha_0.85' = unlist(corr_a_alpha_ls_85),
+                 'alpha_0.9' = unlist(corr_a_alpha_ls_9),
+                 'alpha_0.95' = unlist(corr_a_alpha_ls_95),
+                 'alpha_0.99' = unlist(corr_a_alpha_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_a_alpha_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_a_alpha_ls_99)))
+```
+# 9 Vertices
+
+```{r}
+
+arv <- list()
+uni <- list()
+
+tdg <- lista_grafos_9v
+
+
+for (valor in tdg) {
+  if (gsize(valor) == 8) {
+    arv[[length(arv) + 1]] <- valor
+  }
+  else if (gsize(valor) == 9) {
+    uni[[length(uni) + 1]] <- valor
+  }
+}
+```
+
+```{r}
+
+n <- as.numeric(length(arv))
+ncr <- 3
+```
+
+## Arvores
+
+```{r}
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## B_alpha
+# Lista das correlacoes de grau
+
+corr_degree_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_degree_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_degree_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_degree_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_degree_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_eigenvector_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_eigenvector_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_eigenvector_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_eigenvector_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_eigenvector_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de a_alpha
+
+corr_a_alpha_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_a_alpha_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_a_alpha_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_a_alpha_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_a_alpha_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(arv[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+stopCluster(cl)
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## A_alpha
+# Lista das correlacoes de grau
+
+corr_adegree_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.2)[[1]]
+}
+corr_adegree_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.15)[[1]]
+}
+corr_adegree_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.1)[[1]]
+}
+corr_adegree_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.05)[[1]]
+}
+corr_adegree_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(arv[[i]], 0.01)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_aeigenvector_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.2)[[1]]
+}
+corr_aeigenvector_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.15)[[1]]
+}
+corr_aeigenvector_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.1)[[1]]
+}
+corr_aeigenvector_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.05)[[1]]
+}
+corr_aeigenvector_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(arv[[i]], 0.01)[[1]]
+}
+
+stopCluster(cl)
+```
+### Geração dos grafos 
+
+Os grafos foram obtidos através do site house of graphs.
+
+Número de Grafos: `r n` 
+
+### boxplot das corr b_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_eigenvector_ls_8),
+                 'alpha_0.85' = unlist(corr_eigenvector_ls_85),
+                 'alpha_0.9' = unlist(corr_eigenvector_ls_9),
+                 'alpha_0.95' = unlist(corr_eigenvector_ls_95),
+                 'alpha_0.99' = unlist(corr_eigenvector_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_eigenvector_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_eigenvector_ls_99)))
+```
+
+### boxplot das corr de a_alpha
+```{r}
+
+df <- data.frame('alpha_0.2' = unlist(corr_aeigenvector_ls_2),
+                 'alpha_0.15' = unlist(corr_aeigenvector_ls_15),
+                 'alpha_0.1' = unlist(corr_aeigenvector_ls_1),
+                 'alpha_0.05' = unlist(corr_aeigenvector_ls_05),
+                 'alpha_0.01' = unlist(corr_aeigenvector_ls_01))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.2: ", indices_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.2: ", valores_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.15: ", indices_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.15: ", valores_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.1: ", indices_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.1: ", valores_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.05: ", indices_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.05: ", valores_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.01: ", indices_outliers(unlist(corr_aeigenvector_ls_01)))
+paste0("alpha_0.01: ", valores_outliers(unlist(corr_aeigenvector_ls_01)))
+```
+
+### boxplot das corr b_alpha e a_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_a_alpha_ls_8),
+                 'alpha_0.85' = unlist(corr_a_alpha_ls_85),
+                 'alpha_0.9' = unlist(corr_a_alpha_ls_9),
+                 'alpha_0.95' = unlist(corr_a_alpha_ls_95),
+                 'alpha_0.99' = unlist(corr_a_alpha_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_a_alpha_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_a_alpha_ls_99)))
+```
+
+## Uniciclicos
+
+```{r}
+
+n <- as.numeric(length(uni))
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## B_alpha
+# Lista das correlacoes de grau
+
+corr_degree_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_degree_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_degree_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_degree_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_degree_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_grau(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_eigenvector_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_eigenvector_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_eigenvector_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_eigenvector_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_eigenvector_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_s_eigenvector(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+# Lista das correlacoes de a_alpha
+
+corr_a_alpha_ls_8  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.8)[[1]]
+}
+corr_a_alpha_ls_85  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.85)[[1]]
+}
+corr_a_alpha_ls_9  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.9)[[1]]
+}
+corr_a_alpha_ls_95  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.95)[[1]]
+}
+corr_a_alpha_ls_99  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_a_s_alpha(uni[[i]], C_B_alpha, 0.99)[[1]]
+}
+
+stopCluster(cl)
+
+cl <- makeCluster(ncr)
+registerDoParallel(cl)
+
+invisible(clusterEvalQ(cl, library(igraph)))
+
+## A_alpha
+# Lista das correlacoes de grau
+
+corr_adegree_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.2)[[1]]
+}
+corr_adegree_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.15)[[1]]
+}
+corr_adegree_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.1)[[1]]
+}
+corr_adegree_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.05)[[1]]
+}
+corr_adegree_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_grau_aa_s(uni[[i]], 0.01)[[1]]
+}
+
+# Lista das correlacoes de eigenvector
+
+corr_aeigenvector_ls_2  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.2)[[1]]
+}
+corr_aeigenvector_ls_15  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.15)[[1]]
+}
+corr_aeigenvector_ls_1  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.1)[[1]]
+}
+corr_aeigenvector_ls_05  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.05)[[1]]
+}
+corr_aeigenvector_ls_01  <- foreach(i = 1:n, .combine = 'c') %dopar% {
+  Teste_corr_eig_aa_p(uni[[i]], 0.01)[[1]]
+}
+
+stopCluster(cl)
+```
+### Geração dos grafos 
+
+Os grafos foram obtidos através do site house of graphs.
+
+Número de Grafos: `r n` 
+
+### boxplot das corr b_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_eigenvector_ls_8),
+                 'alpha_0.85' = unlist(corr_eigenvector_ls_85),
+                 'alpha_0.9' = unlist(corr_eigenvector_ls_9),
+                 'alpha_0.95' = unlist(corr_eigenvector_ls_95),
+                 'alpha_0.99' = unlist(corr_eigenvector_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_eigenvector_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_eigenvector_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_eigenvector_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_eigenvector_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_eigenvector_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_eigenvector_ls_99)))
+```
+
+### boxplot das corr de a_alpha
+```{r}
+
+df <- data.frame('alpha_0.2' = unlist(corr_aeigenvector_ls_2),
+                 'alpha_0.15' = unlist(corr_aeigenvector_ls_15),
+                 'alpha_0.1' = unlist(corr_aeigenvector_ls_1),
+                 'alpha_0.05' = unlist(corr_aeigenvector_ls_05),
+                 'alpha_0.01' = unlist(corr_aeigenvector_ls_01))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.2: ", indices_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.2: ", valores_outliers(unlist(corr_aeigenvector_ls_2)))
+paste0("alpha_0.15: ", indices_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.15: ", valores_outliers(unlist(corr_aeigenvector_ls_15)))
+paste0("alpha_0.1: ", indices_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.1: ", valores_outliers(unlist(corr_aeigenvector_ls_1)))
+paste0("alpha_0.05: ", indices_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.05: ", valores_outliers(unlist(corr_aeigenvector_ls_05)))
+paste0("alpha_0.01: ", indices_outliers(unlist(corr_aeigenvector_ls_01)))
+paste0("alpha_0.01: ", valores_outliers(unlist(corr_aeigenvector_ls_01)))
+```
+
+### boxplot das corr b_alpha e a_alpha
+
+```{r}
+df <- data.frame('alpha_0.8' = unlist(corr_a_alpha_ls_8),
+                 'alpha_0.85' = unlist(corr_a_alpha_ls_85),
+                 'alpha_0.9' = unlist(corr_a_alpha_ls_9),
+                 'alpha_0.95' = unlist(corr_a_alpha_ls_95),
+                 'alpha_0.99' = unlist(corr_a_alpha_ls_99))
+
+df <- pivot_longer(df, cols = everything(), names_to = "Coluna", values_to = "Valor")
+
+plot_ly(df, x = ~Coluna, y = ~Valor, type = "box", color = ~Coluna) %>%
+  layout(xaxis = list(title = ""),
+         yaxis = list(title = "Correlação", range = c(-1, 1)))
+
+```
+
+#### Outliers
+
+```{r}
+paste0("alpha_0.8: ", indices_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.8: ", valores_outliers(unlist(corr_a_alpha_ls_8)))
+paste0("alpha_0.85: ", indices_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.85: ", valores_outliers(unlist(corr_a_alpha_ls_85)))
+paste0("alpha_0.9: ", indices_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.9: ", valores_outliers(unlist(corr_a_alpha_ls_9)))
+paste0("alpha_0.95: ", indices_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.95: ", valores_outliers(unlist(corr_a_alpha_ls_95)))
+paste0("alpha_0.99: ", indices_outliers(unlist(corr_a_alpha_ls_99)))
+paste0("alpha_0.99: ", valores_outliers(unlist(corr_a_alpha_ls_99)))
+```
+
+
+
+

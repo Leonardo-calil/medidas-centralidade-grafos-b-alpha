@@ -1,0 +1,95 @@
+---
+title: "Tabelas"
+author: "Leonardo Calil"
+date: Sys.Date()
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+# Pacotes
+
+library("knitr")
+library("kableExtra")
+library("igraph")
+library("rgraph6")
+library("formattable")
+library("dplyr")
+library("purrr")
+library("gridExtra")
+library("gt")
+library("flextable")
+library("DT")
+library("forcats")
+
+# Função para criar grade NxM
+criar_grade <- function(n, m, vizinhanca = 4) {
+  g <- make_lattice(c(n, m), nei = ifelse(vizinhanca == 4, 1, 2), directed = FALSE)
+  return(g)
+}
+
+# Função para gerar versões (completo, esparso conexo, MST)
+gerar_variacoes <- function(g, seed_offset = 0) {
+  # Completo
+  g_completo <- g
+  
+  # Esparso: remover 20% das arestas, garantindo conectividade
+  repeat {
+    set.seed(123 + seed_offset)
+    g_esparso <- delete_edges(g, sample(E(g), length(E(g)) * 0.2))
+    if (is_connected(g_esparso)) break
+    seed_offset <- seed_offset + 1  # muda a semente até ficar conexo
+  }
+  
+  # MST: atribuir pesos aleatórios e extrair árvore geradora mínima
+  set.seed(456 + seed_offset)
+  E(g)$weight <- runif(ecount(g))
+  g_mst <- mst(g, weights = E(g)$weight)
+  
+  return(list(completo = g_completo, esparso = g_esparso, mst = g_mst))
+}
+
+# Gerar todos os grafos (24 no total)
+gerar_base_assis <- function() {
+  tamanhos <- list(c(32,16), c(32,32))  # 512 e 1024 vértices
+  vizinhancas <- c(4,8)
+  instancias <- c("A","B")
+  
+  base <- list()
+  for (tam in tamanhos) {
+    for (viz in vizinhancas) {
+      for (inst in instancias) {
+        seed_offset <- ifelse(inst == "A", 0, 100)
+        g <- criar_grade(tam[1], tam[2], viz)
+        variacoes <- gerar_variacoes(g, seed_offset)
+        
+        # Criar entradas separadas para cada versão
+        for (versao in names(variacoes)) {
+          nome_base <- paste0("grade_", tam[1], "x", tam[2],
+                              "_viz", viz, "_", inst, "_", versao)
+          base[[nome_base]] <- variacoes[[versao]]
+        }
+      }
+    }
+  }
+  return(base)
+}
+
+# Executar
+base_assis <- gerar_base_assis()
+
+# Conferir se todos são conexos
+all(sapply(base_assis, is_connected))  # Deve retornar TRUE
+
+lista_td_grafos <- gerar_base_assis()
+
+id <- names(lista_td_grafos)
+```
+
+```{r}
+ for(i in 1:24){
+   print(id[i])
+   plot(lista_td_grafos[[i]], vertex.size=5, vertex.label=NA)
+ }
+```
+

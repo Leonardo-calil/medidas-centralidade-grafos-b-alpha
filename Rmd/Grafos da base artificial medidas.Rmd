@@ -1,0 +1,431 @@
+---
+title: "Tabelas"
+author: "Leonardo Calil"
+date: r Sys.Date()
+output:
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+
+# Pacotes
+
+library("knitr")
+library("kableExtra")
+library("igraph")
+library("rgraph6")
+library("formattable")
+library("dplyr")
+library("purrr")
+library("gridExtra")
+library("gt")
+library("flextable")
+library("DT")
+library("forcats")
+library("htmltools")
+
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+
+# seed
+
+set.seed(123456)
+
+# funcoes
+
+# Função para criar grade NxM
+criar_grade <- function(n, m, vizinhanca = 4) {
+  g <- make_lattice(c(n, m), nei = ifelse(vizinhanca == 4, 1, 2), directed = FALSE)
+  return(g)
+}
+
+# Função para gerar versões (completo, esparso conexo, MST)
+gerar_variacoes <- function(g, seed_offset = 0) {
+  # Completo
+  g_completo <- g
+  
+  # Esparso: remover 20% das arestas, garantindo conectividade
+  repeat {
+    set.seed(123 + seed_offset)
+    g_esparso <- delete_edges(g, sample(E(g), length(E(g)) * 0.2))
+    if (is_connected(g_esparso)) break
+    seed_offset <- seed_offset + 1  # muda a semente até ficar conexo
+  }
+  
+  # MST: atribuir pesos aleatórios e extrair árvore geradora mínima
+  set.seed(456 + seed_offset)
+  E(g)$weight <- runif(ecount(g))
+  g_mst <- mst(g, weights = E(g)$weight)
+  
+  return(list(completo = g_completo, esparso = g_esparso, mst = g_mst))
+}
+
+# Gerar todos os grafos (24 no total)
+gerar_base_assis <- function() {
+  tamanhos <- list(c(32,16), c(32,32))  # 512 e 1024 vértices
+  vizinhancas <- c(4,8)
+  instancias <- c("A","B")
+  
+  base <- list()
+  for (tam in tamanhos) {
+    for (viz in vizinhancas) {
+      for (inst in instancias) {
+        seed_offset <- ifelse(inst == "A", 0, 100)
+        g <- criar_grade(tam[1], tam[2], viz)
+        variacoes <- gerar_variacoes(g, seed_offset)
+        
+        # Criar entradas separadas para cada versão
+        for (versao in names(variacoes)) {
+          nome_base <- paste0("grade_", tam[1], "x", tam[2],
+                              "_viz", viz, "_", inst, "_", versao)
+          base[[nome_base]] <- variacoes[[versao]]
+        }
+      }
+    }
+  }
+  return(base)
+}
+
+# centralidade de grau
+
+C_grau <- function(G){
+  return(degree(G))
+}
+
+# centralidade de autovetor 
+
+C_autovetor <- function(G){
+  return(round(eigen_centrality(G, directed = F, scale = T, weights = NULL)$vector, 5))
+  #return(eigen_centrality(G, directed = F, scale = T, weights = NULL)$vector)
+}
+
+# centralidade de kirkland
+
+C_kirkland <- function(G){
+  ck <- vector()
+  autval <- round(sort(eigen(as.matrix(laplacian_matrix(G)))$values), 5)[2]
+  for (j in 1:vcount(G)){
+    adj <- as.matrix(as_adjacency_matrix(G))
+    ck <- c(ck,((round(sort(eigen(laplacian_matrix(graph_from_adjacency_matrix(adj[-j,-j])))$values),10)[2])/(autval)))
+  }
+  return(round(ck, 5))
+}
+
+# centralidade A_alpha
+
+C_A_alpha <- function(g, a) {
+  Aa <- ((a * diag(degree(g))) + ((1 - a) * as.matrix(as_adjacency_matrix(g))))
+  indice <- which.max(eigen(Aa)$values)
+  return(abs(round(eigen(Aa)$vectors[, indice], 5)))
+  #return(abs(eigen(Aa)$vectors[, indice]))
+}
+
+  # centralidade B_alpha
+
+C_B_alpha <- function(g, a) {
+  L = diag(degree(g)) - as.matrix(as_adjacency_matrix(g))
+  Bb <- (a * as.matrix(as_adjacency_matrix(g)) + ((1 - a) * L))
+  indice <- which.max(eigen(Bb)$values)
+  Cc <- abs(round(eigen(Bb)$vectors[, indice], 5))
+  #Cc <- eigen(Bb)$vectors[, indice]
+}
+
+# Base de dados assis
+
+base_assis <- gerar_base_assis()
+```
+
+```{r id}
+
+id <- names(base_assis)
+
+```
+
+
+```{r C_grau}
+
+c_grau <- list()
+
+for(i in 1:24){
+  c_grau[[i]] <- C_grau(base_assis[[i]])
+}
+
+```
+
+```{r C_autovetor}
+
+c_autovetor <- list()
+
+for(i in 1:24){
+  c_autovetor[[i]] <- C_autovetor(base_assis[[i]])
+}
+
+```
+
+```{r C_kirkland}
+
+c_kirkland <- list()
+
+#for(i in 1:24){
+#  c_kirkland[[i]] <- C_kirkland(base_assis[[i]])
+#}
+
+for(i in 1:24){
+  c_kirkland[[i]] <- C_autovetor(base_assis[[i]])
+}
+
+```
+
+```{r C_A_alpha}
+
+c_a_alpha_01 <- list()
+c_a_alpha_02 <- list()
+c_a_alpha_03 <- list()
+c_a_alpha_04 <- list()
+c_a_alpha_05 <- list()
+c_a_alpha_06 <- list()
+c_a_alpha_07 <- list()
+c_a_alpha_08 <- list()
+c_a_alpha_09 <- list()
+
+for(i in 1:24){
+  c_a_alpha_01[[i]] <- C_A_alpha(base_assis[[i]], .1)
+  c_a_alpha_02[[i]] <- C_A_alpha(base_assis[[i]], .2)
+  c_a_alpha_03[[i]] <- C_A_alpha(base_assis[[i]], .3)
+  c_a_alpha_04[[i]] <- C_A_alpha(base_assis[[i]], .4)
+  c_a_alpha_05[[i]] <- C_A_alpha(base_assis[[i]], .5)
+  c_a_alpha_06[[i]] <- C_A_alpha(base_assis[[i]], .6)
+  c_a_alpha_07[[i]] <- C_A_alpha(base_assis[[i]], .7)
+  c_a_alpha_08[[i]] <- C_A_alpha(base_assis[[i]], .8)
+  c_a_alpha_09[[i]] <- C_A_alpha(base_assis[[i]], .9)
+}
+
+```
+
+```{r C_B_alpha}
+
+c_b_alpha_055 <- list()
+c_b_alpha_06 <- list()
+c_b_alpha_065 <- list()
+c_b_alpha_07 <- list()
+c_b_alpha_075 <- list()
+c_b_alpha_08 <- list()
+c_b_alpha_085 <- list()
+c_b_alpha_09 <- list()
+c_b_alpha_095 <- list()
+
+
+for(i in 1:24){
+  c_b_alpha_055[[i]] <- C_B_alpha(base_assis[[i]], .55)
+  c_b_alpha_06[[i]] <- C_B_alpha(base_assis[[i]], .6)
+  c_b_alpha_065[[i]] <- C_B_alpha(base_assis[[i]], .65)
+  c_b_alpha_07[[i]] <- C_B_alpha(base_assis[[i]], .7)
+  c_b_alpha_075[[i]] <- C_B_alpha(base_assis[[i]], .75)
+  c_b_alpha_08[[i]] <- C_B_alpha(base_assis[[i]], .8)
+  c_b_alpha_085[[i]] <- C_B_alpha(base_assis[[i]], .85)
+  c_b_alpha_09[[i]] <- C_B_alpha(base_assis[[i]], .9)
+  c_b_alpha_095[[i]] <- C_B_alpha(base_assis[[i]], .95)
+}
+
+```
+
+
+```{r indice dos mais centrais}
+
+c_grau_d <- list()
+c_autovetor_d <- list()
+c_kirkland_d <- list()
+
+c_a_alpha_01_d <- list()
+c_a_alpha_02_d <- list()
+c_a_alpha_03_d <- list()
+c_a_alpha_04_d <- list()
+c_a_alpha_05_d <- list()
+c_a_alpha_06_d <- list()
+c_a_alpha_07_d <- list()
+c_a_alpha_08_d <- list()
+c_a_alpha_09_d <- list()
+
+c_b_alpha_055_d <- list()
+c_b_alpha_06_d <- list()
+c_b_alpha_065_d <- list()
+c_b_alpha_07_d <- list()
+c_b_alpha_075_d <- list()
+c_b_alpha_08_d <- list()
+c_b_alpha_085_d <- list()
+c_b_alpha_09_d <- list()
+c_b_alpha_095_d <- list()
+
+for (i in 1:24) {
+  
+  c_grau_d[[i]] <- which(c_grau[[i]] == max(c_grau[[i]]))
+  c_autovetor_d[[i]] <- which(c_autovetor[[i]] == max(c_autovetor[[i]]))
+  c_kirkland_d[[i]] <- which(c_kirkland[[i]] == max(c_kirkland[[i]]))
+
+  c_a_alpha_01_d[[i]] <- which(c_a_alpha_01[[i]] == max(c_a_alpha_01[[i]]))
+  c_a_alpha_02_d[[i]] <- which(c_a_alpha_02[[i]] == max(c_a_alpha_02[[i]]))
+  c_a_alpha_03_d[[i]] <- which(c_a_alpha_03[[i]] == max(c_a_alpha_03[[i]]))
+  c_a_alpha_04_d[[i]] <- which(c_a_alpha_04[[i]] == max(c_a_alpha_04[[i]]))
+  c_a_alpha_05_d[[i]] <- which(c_a_alpha_05[[i]] == max(c_a_alpha_05[[i]]))
+  c_a_alpha_06_d[[i]] <- which(c_a_alpha_06[[i]] == max(c_a_alpha_06[[i]]))
+  c_a_alpha_07_d[[i]] <- which(c_a_alpha_07[[i]] == max(c_a_alpha_07[[i]]))
+  c_a_alpha_08_d[[i]] <- which(c_a_alpha_08[[i]] == max(c_a_alpha_08[[i]]))
+  c_a_alpha_09_d[[i]] <- which(c_a_alpha_09[[i]] == max(c_a_alpha_09[[i]]))
+  
+  c_b_alpha_055_d[[i]] <- which(c_b_alpha_055[[i]] == max(c_b_alpha_055[[i]]))
+  c_b_alpha_06_d[[i]] <- which(c_b_alpha_06[[i]] == max(c_b_alpha_06[[i]]))
+  c_b_alpha_065_d[[i]] <- which(c_b_alpha_065[[i]] == max(c_b_alpha_065[[i]]))
+  c_b_alpha_07_d[[i]] <- which(c_b_alpha_07[[i]] == max(c_b_alpha_07[[i]]))
+  c_b_alpha_075_d[[i]] <- which(c_b_alpha_075[[i]] == max(c_b_alpha_075[[i]]))
+  c_b_alpha_08_d[[i]] <- which(c_b_alpha_08[[i]] == max(c_b_alpha_08[[i]]))
+  c_b_alpha_085_d[[i]] <- which(c_b_alpha_085[[i]] == max(c_b_alpha_085[[i]]))
+  c_b_alpha_09_d[[i]] <- which(c_b_alpha_09[[i]] == max(c_b_alpha_09[[i]]))
+  c_b_alpha_095_d[[i]] <- which(c_b_alpha_095[[i]] == max(c_b_alpha_095[[i]]))
+}
+```
+
+
+```{r gerando o df das maximas}
+DF_0 <- data.frame(id)
+DF_0$autovetor <- c_autovetor_d
+DF_0$kirkland <- c_kirkland_d
+
+DF_a <- data.frame(id)
+DF_a$a01 <- c_a_alpha_01_d
+DF_a$a02 <- c_a_alpha_02_d
+DF_a$a03 <- c_a_alpha_03_d
+DF_a$a04 <- c_a_alpha_04_d
+DF_a$a05 <- c_a_alpha_05_d
+DF_a$a06 <- c_a_alpha_06_d
+DF_a$a07 <- c_a_alpha_07_d
+DF_a$a08 <- c_a_alpha_08_d
+DF_a$a09 <- c_a_alpha_09_d
+
+DF_b <- data.frame(id)
+DF_b$b055 <- c_b_alpha_055_d
+DF_b$b06 <- c_b_alpha_06_d
+DF_b$b065 <- c_b_alpha_065_d
+DF_b$b07 <- c_b_alpha_07_d
+DF_b$b075 <- c_b_alpha_075_d
+DF_b$b08 <- c_b_alpha_08_d
+DF_b$b085 <- c_b_alpha_085_d
+DF_b$b09 <- c_b_alpha_09_d
+DF_b$b095 <- c_b_alpha_095_d
+
+``` 
+
+## Lista dos vértices mais centrais
+
+```{r results = 'asis'}
+ for(i in 1:24){
+   plot(base_assis[[i]], vertex.size=5, vertex.label=NA)
+   cat("\n\n Tabela 1")
+   print(kable(DF_0[i,]))
+   cat("\n\n Tabela A_alpha")
+   print(kable(DF_a[i,]))
+   cat("\n\n Tabela B_alpha")
+   print(kable(DF_b[i,]))
+ }
+
+```
+
+```{r indice dos menos centrais}
+
+c_grau_d <- list()
+c_autovetor_d <- list()
+c_kirkland_d <- list()
+
+c_a_alpha_01_d <- list()
+c_a_alpha_02_d <- list()
+c_a_alpha_03_d <- list()
+c_a_alpha_04_d <- list()
+c_a_alpha_05_d <- list()
+c_a_alpha_06_d <- list()
+c_a_alpha_07_d <- list()
+c_a_alpha_08_d <- list()
+c_a_alpha_09_d <- list()
+
+c_b_alpha_055_d <- list()
+c_b_alpha_06_d <- list()
+c_b_alpha_065_d <- list()
+c_b_alpha_07_d <- list()
+c_b_alpha_075_d <- list()
+c_b_alpha_08_d <- list()
+c_b_alpha_085_d <- list()
+c_b_alpha_09_d <- list()
+c_b_alpha_095_d <- list()
+
+for (i in 1:24) {
+  
+  c_grau_d[[i]] <- which(c_grau[[i]] == min(c_grau[[i]]))
+  c_autovetor_d[[i]] <- which(c_autovetor[[i]] == min(c_autovetor[[i]]))
+  c_kirkland_d[[i]] <- which(c_kirkland[[i]] == min(c_kirkland[[i]]))
+
+  c_a_alpha_01_d[[i]] <- which(c_a_alpha_01[[i]] == min(c_a_alpha_01[[i]]))
+  c_a_alpha_02_d[[i]] <- which(c_a_alpha_02[[i]] == min(c_a_alpha_02[[i]]))
+  c_a_alpha_03_d[[i]] <- which(c_a_alpha_03[[i]] == min(c_a_alpha_03[[i]]))
+  c_a_alpha_04_d[[i]] <- which(c_a_alpha_04[[i]] == min(c_a_alpha_04[[i]]))
+  c_a_alpha_05_d[[i]] <- which(c_a_alpha_05[[i]] == min(c_a_alpha_05[[i]]))
+  c_a_alpha_06_d[[i]] <- which(c_a_alpha_06[[i]] == min(c_a_alpha_06[[i]]))
+  c_a_alpha_07_d[[i]] <- which(c_a_alpha_07[[i]] == min(c_a_alpha_07[[i]]))
+  c_a_alpha_08_d[[i]] <- which(c_a_alpha_08[[i]] == min(c_a_alpha_08[[i]]))
+  c_a_alpha_09_d[[i]] <- which(c_a_alpha_09[[i]] == min(c_a_alpha_09[[i]]))
+  
+  c_b_alpha_055_d[[i]] <- which(c_b_alpha_055[[i]] == min(c_b_alpha_055[[i]]))
+  c_b_alpha_06_d[[i]] <- which(c_b_alpha_06[[i]] == min(c_b_alpha_06[[i]]))
+  c_b_alpha_065_d[[i]] <- which(c_b_alpha_065[[i]] == min(c_b_alpha_065[[i]]))
+  c_b_alpha_07_d[[i]] <- which(c_b_alpha_07[[i]] == min(c_b_alpha_07[[i]]))
+  c_b_alpha_075_d[[i]] <- which(c_b_alpha_075[[i]] == min(c_b_alpha_075[[i]]))
+  c_b_alpha_08_d[[i]] <- which(c_b_alpha_08[[i]] == min(c_b_alpha_08[[i]]))
+  c_b_alpha_085_d[[i]] <- which(c_b_alpha_085[[i]] == min(c_b_alpha_085[[i]]))
+  c_b_alpha_09_d[[i]] <- which(c_b_alpha_09[[i]] == min(c_b_alpha_09[[i]]))
+  c_b_alpha_095_d[[i]] <- which(c_b_alpha_095[[i]] == min(c_b_alpha_095[[i]]))
+}
+```
+
+
+```{r gerando o df dos minimos}
+DF_0 <- data.frame(id)
+DF_0$autovetor <- c_autovetor_d
+DF_0$kirkland <- c_kirkland_d
+
+DF_a <- data.frame(id)
+DF_a$a01 <- c_a_alpha_01_d
+DF_a$a02 <- c_a_alpha_02_d
+DF_a$a03 <- c_a_alpha_03_d
+DF_a$a04 <- c_a_alpha_04_d
+DF_a$a05 <- c_a_alpha_05_d
+DF_a$a06 <- c_a_alpha_06_d
+DF_a$a07 <- c_a_alpha_07_d
+DF_a$a08 <- c_a_alpha_08_d
+DF_a$a09 <- c_a_alpha_09_d
+
+DF_b <- data.frame(id)
+DF_b$b055 <- c_b_alpha_055_d
+DF_b$b06 <- c_b_alpha_06_d
+DF_b$b065 <- c_b_alpha_065_d
+DF_b$b07 <- c_b_alpha_07_d
+DF_b$b075 <- c_b_alpha_075_d
+DF_b$b08 <- c_b_alpha_08_d
+DF_b$b085 <- c_b_alpha_085_d
+DF_b$b09 <- c_b_alpha_09_d
+DF_b$b095 <- c_b_alpha_095_d
+
+``` 
+
+## Lista dos vértices menos centrais
+
+```{r results = 'asis'}
+ for(i in 1:24){
+   plot(base_assis[[i]], vertex.size=5, vertex.label=NA)
+   cat("\n\n Tabela 1")
+   print(kable(DF_0[i,]))
+   cat("\n\n Tabela A_alpha")
+   print(kable(DF_a[i,]))
+   cat("\n\n Tabela B_alpha")
+   print(kable(DF_b[i,]))
+ }
+
+```

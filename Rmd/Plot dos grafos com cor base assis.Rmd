@@ -1,0 +1,159 @@
+---
+title: "Base assis"
+author: "Leonardo Calil"
+date: r Sys.Date()
+output:
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+
+# Pacotes
+
+library("knitr")
+library("kableExtra")
+library("igraph")
+library("rgraph6")
+library("formattable")
+library("dplyr")
+library("purrr")
+library("gridExtra")
+library("gt")
+library("flextable")
+library("DT")
+library("forcats")
+library("htmltools")
+
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+
+# seed
+
+set.seed(12345)
+
+# funcoes
+
+# Função para criar grade NxM
+criar_grade <- function(n, m, vizinhanca = 4) {
+  g <- make_lattice(c(n, m), nei = ifelse(vizinhanca == 4, 1, 2), directed = FALSE)
+  return(g)
+}
+
+# Função para gerar versões (completo, esparso conexo, MST)
+gerar_variacoes <- function(g, seed_offset = 0) {
+  # Completo
+  g_completo <- g
+  
+  # Esparso: remover 20% das arestas, garantindo conectividade
+  repeat {
+    set.seed(123 + seed_offset)
+    g_esparso <- delete_edges(g, sample(E(g), length(E(g)) * 0.2))
+    if (is_connected(g_esparso)) break
+    seed_offset <- seed_offset + 1  # muda a semente até ficar conexo
+  }
+  
+  # MST: atribuir pesos aleatórios e extrair árvore geradora mínima
+  set.seed(456 + seed_offset)
+  E(g)$weight <- runif(ecount(g))
+  g_mst <- mst(g, weights = E(g)$weight)
+  
+  return(list(completo = g_completo, esparso = g_esparso, mst = g_mst))
+}
+
+# Gerar todos os grafos (24 no total)
+gerar_base_assis <- function() {
+  tamanhos <- list(c(32,16), c(32,32))  # 512 e 1024 vértices
+  vizinhancas <- c(4,8)
+  instancias <- c("A","B")
+  
+  base <- list()
+  for (tam in tamanhos) {
+    for (viz in vizinhancas) {
+      for (inst in instancias) {
+        seed_offset <- ifelse(inst == "A", 0, 100)
+        g <- criar_grade(tam[1], tam[2], viz)
+        variacoes <- gerar_variacoes(g, seed_offset)
+        
+        # Criar entradas separadas para cada versão
+        for (versao in names(variacoes)) {
+          nome_base <- paste0("grade_", tam[1], "x", tam[2],
+                              "_viz", viz, "_", inst, "_", versao)
+          base[[nome_base]] <- variacoes[[versao]]
+        }
+      }
+    }
+  }
+  return(base)
+}
+
+# centralidade A_alpha
+
+C_A_alpha <- function(g, a) {
+  Aa <- ((a * diag(degree(g))) + ((1 - a) * as.matrix(as_adjacency_matrix(g))))
+  indice <- which.max(eigen(Aa)$values)
+  return(abs(round(eigen(Aa)$vectors[, indice], 5)))
+  #return(abs(eigen(Aa)$vectors[, indice]))
+}
+
+  # centralidade B_alpha
+
+C_B_alpha <- function(g, a) {
+  L = diag(degree(g)) - as.matrix(as_adjacency_matrix(g))
+  Bb <- (a * as.matrix(as_adjacency_matrix(g)) + ((1 - a) * L))
+  indice <- which.max(eigen(Bb)$values)
+  Cc <- round(eigen(Bb)$vectors[, indice], 5)
+  #Cc <- eigen(Bb)$vectors[, indice]
+  if (all(Cc < 0)) {
+    return(abs(Cc))
+  }
+  else{
+    return(Cc)
+  }
+}
+
+# Base de dados assis
+
+base_assis <- gerar_base_assis()
+
+```
+
+```{r id}
+
+id <- names(base_assis)
+
+```
+
+
+```{r}
+  
+
+minha_paleta <- colorRampPalette(c("white", "red"))
+
+cores <- minha_paleta(101)
+
+
+for(i in 1:24){
+  centralidade <- C_B_alpha(base_assis[[i]], 0.6) 
+  
+  centralidade_norm <- as.numeric(as.factor(centralidade))
+  
+  cores <- minha_paleta(max(centralidade_norm))
+  
+  #centralidade_norm <- (centralidade - min(centralidade)) / 
+  #                     (max(centralidade) - min(centralidade))
+
+  # Criar cores: do branco (0) ao vermelho (1)
+  #cores <- rgb(1, 1 - centralidade_norm, 1 - centralidade_norm)
+
+  # Plotar o grafo
+  plot(base_assis[[i]],
+       vertex.color = cores[centralidade_norm],
+       vertex.size = 5,
+       vertex.label = NA,
+       main = "Centralidade: Branco (baixa) -> Vermelho (alta)")
+}
+
+```
+
